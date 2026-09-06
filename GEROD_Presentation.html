@@ -1,0 +1,1562 @@
+<!doctype html>
+<meta charset="utf-8">
+<meta name="description" content="Présentation du système GEROD : détection ANPR, donnée unique et opposable, fonctions de base et avancées, gestion des infractions, connaissance routière, suivi et installation progressive.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cpath d='M16 2 30 7v11c0 8-6 12-14 14C8 30 2 26 2 18V7z' fill='%230B6FA8'/%3E%3Cpath d='M10 16l4 4 9-10' stroke='%23fff' stroke-width='3' fill='none' stroke-linecap='round'/%3E%3C/svg%3E">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>GEROD</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Saira:wght@500;600;700;800&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+/* =========================================================================
+   GEROD — deck de présentation.
+   Deux thèmes complets. Toutes les couleurs passent par les jetons ci-dessous ;
+   aucune n'est déclarée à l'intérieur d'un bloc de thème seulement.
+   Contrastes vérifiés : texte secondaire ≥ 5:1, accents ≥ 4.9:1 sur leur fond.
+   ========================================================================= */
+
+:root{
+  color-scheme:light;
+
+  --fond:#F2F5F9;
+  --panneau:#FFFFFF;
+  --panneau-2:#E8EEF5;
+  --trait:#C3D2E0;
+  --trait-fort:#93AEC6;
+
+  --encre:#0C1720;
+  --encre-2:#3A4E60;
+  --encre-3:#55697C;
+
+  --accent:#0B6FA8;
+  --accent-2:#0E86C9;
+  --accent-voile:rgba(11,111,168,.09);
+
+  --vert:#0F7A52;
+  --ambre:#8A5A00;
+  --rouge:#B4232E;
+  --vert-voile:rgba(15,122,82,.10);
+  --ambre-voile:rgba(138,90,0,.10);
+  --rouge-voile:rgba(180,35,46,.09);
+
+  --ombre:0 18px 50px rgba(12,23,32,.14);
+
+  /* Scène animée d'ouverture — triplets lus par le canvas. */
+  --sc-fond:236,241,247;
+  --sc-neon:11,111,168;
+  --sc-neon-2:14,134,201;
+  --sc-encre:12,23,32;
+  --sc-force:.55;
+
+  --display:"Saira","Saira Fallback",system-ui,sans-serif;
+  --texte:"IBM Plex Sans","IBM Plex Sans Fallback",system-ui,sans-serif;
+  --data:"IBM Plex Mono",ui-monospace,"SFMono-Regular",Menlo,monospace;
+}
+
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --fond:#070B12;
+    --panneau:#0E1520;
+    --panneau-2:#141E2C;
+    --trait:#253244;
+    --trait-fort:#3C516B;
+    --encre:#EAF3FB;
+    --encre-2:#A6BACE;
+    --encre-3:#8398AF;
+    --accent:#35C0FF;
+    --accent-2:#6FE3FF;
+    --accent-voile:rgba(53,192,255,.10);
+    --vert:#3FDCA3;
+    --ambre:#FFBE55;
+    --rouge:#FF7A83;
+    --vert-voile:rgba(63,220,163,.10);
+    --ambre-voile:rgba(255,190,85,.10);
+    --rouge-voile:rgba(255,122,131,.10);
+    --ombre:0 24px 70px rgba(0,0,0,.6);
+    --sc-fond:5,7,13;
+    --sc-neon:0,180,255;
+    --sc-neon-2:111,227,255;
+    --sc-encre:234,246,255;
+    --sc-force:1;
+  }
+}
+
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --fond:#070B12;
+  --panneau:#0E1520;
+  --panneau-2:#141E2C;
+  --trait:#253244;
+  --trait-fort:#3C516B;
+  --encre:#EAF3FB;
+  --encre-2:#A6BACE;
+  --encre-3:#8398AF;
+  --accent:#35C0FF;
+  --accent-2:#6FE3FF;
+  --accent-voile:rgba(53,192,255,.10);
+  --vert:#3FDCA3;
+  --ambre:#FFBE55;
+  --rouge:#FF7A83;
+  --vert-voile:rgba(63,220,163,.10);
+  --ambre-voile:rgba(255,190,85,.10);
+  --rouge-voile:rgba(255,122,131,.10);
+  --ombre:0 24px 70px rgba(0,0,0,.6);
+  --sc-fond:5,7,13;
+  --sc-neon:0,180,255;
+  --sc-neon-2:111,227,255;
+  --sc-encre:234,246,255;
+  --sc-force:1;
+}
+
+*{ box-sizing:border-box; }
+
+body{
+  margin:0;
+  background:var(--fond);
+  color:var(--encre);
+  font-family:var(--texte);
+  overflow:hidden;
+  height:100dvh;
+}
+
+/* --- Scène fixe 1280×720, mise à l'échelle du viewport ------------------- */
+
+#tapis{ position:fixed; inset:0; display:grid; place-items:center; background:var(--fond); }
+
+#scene{
+  position:relative; width:1280px; height:720px;
+  transform-origin:center center;
+  background:var(--fond);
+  overflow:hidden;
+  box-shadow:var(--ombre);
+  border:1px solid var(--trait);
+}
+
+/* --- Chrome -------------------------------------------------------------- */
+
+.chrome{
+  position:absolute; left:0; right:0; display:flex; align-items:center; gap:16px;
+  padding:0 44px; z-index:40; pointer-events:none;
+  font-family:var(--data); font-size:12px; letter-spacing:.18em;
+  text-transform:uppercase; color:var(--encre-3);
+}
+.chrome--haut{ top:26px; }
+.chrome--bas{ bottom:22px; }
+.marque{ display:flex; align-items:center; gap:10px; }
+.marque .sceau{ width:20px; height:20px; }
+.marque b{ font-family:var(--display); font-weight:700; letter-spacing:.28em; font-size:13px; color:var(--encre); }
+.pousse{ margin-left:auto; }
+.cadran{ color:var(--accent); font-variant-numeric:tabular-nums; }
+.cadran s{ color:var(--encre-3); text-decoration:none; }
+
+#bascule{
+  pointer-events:auto; cursor:pointer;
+  font-family:var(--data); font-size:11px; letter-spacing:.16em; text-transform:uppercase;
+  color:var(--encre-2); background:var(--panneau); border:1px solid var(--trait);
+  border-radius:3px; padding:5px 11px;
+}
+#bascule:hover{ border-color:var(--accent); color:var(--accent); }
+
+#jauge{ position:absolute; left:0; top:0; height:3px; width:100%; background:var(--trait); z-index:41; }
+#jauge > i{ display:block; height:100%; width:0; background:var(--accent); transition:width 420ms cubic-bezier(.2,.9,.2,1); }
+
+.scene--nu .chrome--haut .marque,
+.scene--nu .chrome--haut #section,
+.scene--nu .chrome--haut .cadran,
+.scene--nu .chrome--bas{ opacity:0; }
+
+/* --- Diapositives -------------------------------------------------------- */
+
+.dia{
+  position:absolute; inset:0; padding:70px 64px 62px;
+  display:none; grid-template-rows:auto 1fr; gap:22px;
+}
+.dia.est-active{ display:grid; animation:diaEntre 460ms cubic-bezier(.2,.9,.2,1) backwards; }
+@keyframes diaEntre{ from{ opacity:0; transform:translateY(12px); } to{ opacity:1; transform:none; } }
+
+.entete{ display:grid; gap:10px; }
+.sur{
+  font-family:var(--data); font-size:12px; font-weight:500; letter-spacing:.26em;
+  text-transform:uppercase; color:var(--accent); display:flex; align-items:center; gap:12px;
+}
+.sur::before{ content:""; width:24px; height:2px; background:var(--accent); flex:none; }
+h1{
+  margin:0; font-family:var(--display); font-weight:700; font-size:42px; line-height:1.08;
+  letter-spacing:-.012em; text-wrap:balance; max-width:24ch; color:var(--encre);
+}
+.chapo{ margin:0; font-size:17.5px; line-height:1.5; color:var(--encre-2); max-width:80ch; }
+.chapo b{ color:var(--encre); font-weight:600; }
+
+.corps{ display:grid; align-content:center; gap:20px; min-height:0; }
+
+[data-monte]{}
+.est-active [data-monte]{
+  animation:monte 560ms cubic-bezier(.2,.9,.2,1) backwards;
+  animation-delay:calc(var(--r,0) * 85ms + 110ms);
+}
+@keyframes monte{ from{ opacity:0; transform:translateY(14px); } to{ opacity:1; transform:none; } }
+
+/* --- Briques communes ---------------------------------------------------- */
+
+.grille{ display:grid; gap:16px; }
+.g2{ grid-template-columns:1fr 1fr; }
+.g3{ grid-template-columns:repeat(3,1fr); }
+.g4{ grid-template-columns:repeat(4,1fr); }
+.g5{ grid-template-columns:repeat(5,1fr); }
+
+.carte{
+  background:var(--panneau); border:1px solid var(--trait); border-radius:4px;
+  padding:18px 20px; display:grid; gap:8px; align-content:start;
+}
+.carte h2{ margin:0; font-family:var(--display); font-weight:600; font-size:18px; color:var(--encre); }
+.carte p{ margin:0; font-size:14px; line-height:1.5; color:var(--encre-2); }
+.etiquette{
+  font-family:var(--data); font-size:11px; letter-spacing:.18em;
+  text-transform:uppercase; color:var(--encre-3);
+}
+
+.vignette{
+  display:block; width:100%; height:82px; border-radius:3px;
+  background:var(--panneau-2); border:1px solid var(--trait);
+}
+
+.chute{
+  font-family:var(--display); font-weight:600; font-size:21px; line-height:1.35;
+  color:var(--encre); text-wrap:balance; max-width:66ch;
+}
+.chute span{ color:var(--accent); }
+
+.sceau{ background:url("data:image/webp;base64,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") center/contain no-repeat; flex:none; }
+svg .fond{ fill:var(--panneau-2); }
+svg .cadre{ fill:none; stroke:var(--trait); }
+svg .trait{ stroke:var(--trait-fort); fill:none; }
+svg .vif{ stroke:var(--accent); fill:none; }
+svg .vif-plein{ fill:var(--accent); }
+svg .encre{ fill:var(--encre); }
+svg .encre-2{ fill:var(--encre-2); }
+svg .encre-3{ fill:var(--encre-3); }
+svg text{ font-family:"IBM Plex Mono",ui-monospace,monospace; font-size:11px; }
+svg .lib{ font-family:"IBM Plex Sans",system-ui,sans-serif; font-size:12.5px; fill:var(--encre-2); }
+svg .ic{ stroke:var(--accent); fill:none; stroke-width:2; stroke-linecap:round; stroke-linejoin:round; }
+svg .ic-2{ stroke:var(--encre-3); fill:none; stroke-width:2; stroke-linecap:round; stroke-linejoin:round; }
+
+/* --- Couverture ---------------------------------------------------------- */
+
+#couverture{ padding:0; grid-template-rows:1fr; }
+#toile{ position:absolute; inset:0; width:100%; height:100%; display:block; }
+.couv-voile{
+  position:absolute; inset:0; z-index:2; pointer-events:none;
+  background:radial-gradient(closest-side, rgba(0,0,0,0) 52%, var(--accent-voile) 100%);
+}
+.couv-bloc{
+  position:relative; z-index:3; height:100%;
+  display:grid; justify-items:center; align-content:center; gap:0; text-align:center;
+}
+.couv-logo{
+  width:178px; height:178px;
+  animation:logoEntre 900ms cubic-bezier(.2,.9,.2,1) 2400ms backwards;
+}
+@keyframes logoEntre{
+  0%{ opacity:0; transform:scale(.88); } 60%{ opacity:1; transform:scale(1.03); } 100%{ opacity:1; transform:scale(1); }
+}
+.couv-nom{
+  margin-top:14px; font-family:var(--display); font-weight:800; font-size:84px; line-height:1;
+  letter-spacing:.2em; text-indent:.2em; color:var(--encre);
+  animation:texteEntre 800ms cubic-bezier(.2,.9,.2,1) 2700ms backwards;
+}
+.couv-sous{
+  margin-top:14px; font-family:var(--data); font-size:14px; letter-spacing:.3em;
+  text-transform:uppercase; color:var(--encre-2);
+  animation:texteEntre 800ms cubic-bezier(.2,.9,.2,1) 2850ms backwards;
+}
+.couv-trait{
+  width:110px; height:2px; margin-top:26px; background:var(--accent);
+  animation:texteEntre 800ms ease 3000ms backwards;
+}
+.couv-accroche{
+  margin:24px 0 0; max-width:40ch; font-size:17px; line-height:1.6; color:var(--encre-2);
+  animation:texteEntre 800ms cubic-bezier(.2,.9,.2,1) 3150ms backwards;
+}
+@keyframes texteEntre{ from{ opacity:0; transform:translateY(12px); } to{ opacity:1; transform:none; } }
+.couv-invite{
+  position:absolute; bottom:40px; left:0; right:0; z-index:3; text-align:center;
+  font-family:var(--data); font-size:12px; letter-spacing:.22em; text-transform:uppercase;
+  color:var(--encre-3);
+  animation:texteEntre 800ms ease 3900ms backwards, pouls 3s ease-in-out 4.8s infinite;
+}
+@keyframes pouls{ 0%,100%{ opacity:.6; } 50%{ opacity:1; } }
+
+/* --- Deux caméras -------------------------------------------------------- */
+
+.duo-cam{ display:grid; grid-template-columns:1fr 1fr; gap:22px; }
+.cam{
+  border:1px solid var(--trait); border-radius:4px; overflow:hidden;
+  background:var(--panneau); display:grid; grid-template-rows:auto 1fr;
+}
+.cam--vif{ border-color:var(--accent); box-shadow:0 0 0 1px var(--accent); }
+.cam-tete{
+  display:flex; align-items:center; gap:10px; padding:11px 16px;
+  border-bottom:1px solid var(--trait); background:var(--panneau-2);
+  font-family:var(--data); font-size:11.5px; letter-spacing:.18em;
+  text-transform:uppercase; color:var(--encre-2);
+}
+.cam--vif .cam-tete{ color:var(--accent); background:var(--accent-voile); }
+.cam-corps{ padding:14px 16px 16px; display:grid; gap:12px; align-content:start; }
+.cam-corps svg{ width:100%; height:auto; display:block; }
+.cam-dit{ font-size:14.5px; line-height:1.5; color:var(--encre-2); margin:0; }
+.cam--vif .cam-dit{ color:var(--encre); }
+
+/* --- Chaîne de détection -------------------------------------------------- */
+
+.chaine{ display:grid; grid-template-columns:repeat(6,1fr); gap:10px; }
+.poste{
+  position:relative; background:var(--panneau); border:1px solid var(--trait);
+  border-radius:4px; padding:14px 13px; display:grid; gap:9px; align-content:start;
+  transition:border-color 260ms ease, box-shadow 260ms ease, transform 260ms ease;
+}
+.poste svg{ width:32px; height:32px; }
+.poste .no{ font-family:var(--data); font-size:11px; letter-spacing:.18em; color:var(--encre-3); }
+.poste h2{ margin:0; font-family:var(--display); font-weight:600; font-size:15.5px; line-height:1.2; color:var(--encre); }
+.poste p{ margin:0; font-size:12.5px; line-height:1.4; color:var(--encre-2); }
+.poste::after{
+  content:""; position:absolute; right:-10px; top:50%; width:10px; height:2px;
+  background:var(--trait); z-index:1;
+}
+.poste:last-child::after{ display:none; }
+.poste.chaud{ border-color:var(--accent); transform:translateY(-3px); box-shadow:0 0 0 1px var(--accent); }
+.poste.chaud .no{ color:var(--accent); }
+
+.lecture{
+  display:grid; grid-template-columns:auto 1fr auto; gap:0 26px; align-items:center;
+  background:var(--panneau); border:1px solid var(--trait); border-radius:4px; padding:16px 22px;
+}
+.lecture .plaque{
+  font-family:var(--data); font-weight:500; font-size:34px; letter-spacing:.05em;
+  color:var(--accent); font-variant-numeric:tabular-nums; min-width:5.6ch;
+}
+.lecture .plaque.instable{ color:var(--encre-3); }
+.lecture .votes{ display:grid; gap:7px; }
+.lecture .vote{
+  display:grid; grid-template-columns:66px 1fr 44px; gap:12px; align-items:center;
+  font-family:var(--data); font-size:12px; color:var(--encre-2);
+}
+.lecture .vote span:last-child{ text-align:right; font-variant-numeric:tabular-nums; }
+.lecture .barre{ height:4px; background:var(--panneau-2); border:1px solid var(--trait); border-radius:2px; overflow:hidden; }
+.lecture .barre i{ display:block; height:100%; background:var(--trait-fort); transition:width 380ms ease, background 380ms ease; }
+.lecture .vote.gagne{ color:var(--accent); }
+.lecture .vote.gagne .barre i{ background:var(--accent); }
+.lecture .verdict{ font-family:var(--data); font-size:11.5px; letter-spacing:.16em; text-transform:uppercase; color:var(--encre-3); text-align:right; }
+
+/* --- Principes ----------------------------------------------------------- */
+
+.principe{
+  display:grid; gap:14px; align-content:start;
+  border-top:3px solid var(--accent); padding-top:18px;
+}
+.principe svg{ width:54px; height:54px; }
+.principe h2{ margin:0; font-family:var(--display); font-weight:700; font-size:22px; line-height:1.15; color:var(--encre); text-wrap:balance; }
+.principe p{ margin:0; font-size:14px; line-height:1.5; color:var(--encre-2); }
+
+/* --- Tuiles de fonctionnalité --------------------------------------------- */
+
+.tuile{
+  background:var(--panneau); border:1px solid var(--trait); border-radius:4px;
+  display:grid; grid-template-rows:auto auto 1fr; overflow:hidden;
+}
+.tuile .figure{ background:var(--panneau-2); border-bottom:1px solid var(--trait); padding:14px 16px; }
+.tuile .figure svg{ display:block; width:100%; height:104px; }
+.tuile h2{ margin:0; padding:14px 16px 0; font-family:var(--display); font-weight:600; font-size:17px; color:var(--encre); }
+.tuile p{ margin:0; padding:6px 16px 16px; font-size:13.5px; line-height:1.5; color:var(--encre-2); }
+
+/* --- Flux de traitement --------------------------------------------------- */
+
+.flux{ display:grid; grid-template-columns:repeat(4,1fr); gap:14px; }
+.pas{
+  background:var(--panneau); border:1px solid var(--trait); border-left:3px solid var(--accent);
+  border-radius:4px; padding:16px 18px; display:grid; gap:10px; align-content:start; position:relative;
+}
+.pas .rang{ font-family:var(--data); font-size:11px; letter-spacing:.2em; text-transform:uppercase; color:var(--accent); }
+.pas h2{ margin:0; font-family:var(--display); font-weight:600; font-size:18px; color:var(--encre); }
+.pas ul{ margin:0; padding:0; list-style:none; display:grid; gap:6px; }
+.pas li{ font-size:13.5px; line-height:1.45; color:var(--encre-2); padding-left:15px; position:relative; }
+.pas li::before{ content:""; position:absolute; left:0; top:8px; width:6px; height:1px; background:var(--trait-fort); }
+.pas::after{
+  content:""; position:absolute; right:-14px; top:50%; width:14px; height:2px; background:var(--trait);
+}
+.pas:last-child::after{ display:none; }
+
+.issues{ display:grid; grid-template-columns:repeat(3,1fr); gap:12px; }
+.issue{
+  border:1px solid var(--trait); border-radius:4px; padding:12px 16px; background:var(--panneau);
+  display:grid; gap:4px;
+}
+.issue .c{ font-family:var(--data); font-size:11.5px; letter-spacing:.16em; text-transform:uppercase; }
+.issue p{ margin:0; font-size:13px; color:var(--encre-2); line-height:1.45; }
+.issue.ok{ border-left:3px solid var(--vert); } .issue.ok .c{ color:var(--vert); }
+.issue.no{ border-left:3px solid var(--rouge); } .issue.no .c{ color:var(--rouge); }
+.issue.at{ border-left:3px solid var(--ambre); } .issue.at .c{ color:var(--ambre); }
+
+/* --- Graphe de connaissance ----------------------------------------------- */
+
+.graphe{ border:1px solid var(--trait); border-radius:4px; background:var(--panneau); padding:10px; }
+.graphe svg{ display:block; width:100%; height:auto; }
+.noeud rect, .noeud circle{ fill:var(--panneau-2); stroke:var(--trait-fort); stroke-width:1.5; }
+.noeud.pivot rect{ fill:var(--accent-voile); stroke:var(--accent); stroke-width:2; }
+.noeud text{ fill:var(--encre); font-family:"IBM Plex Sans",system-ui,sans-serif; font-size:13px; font-weight:600; }
+.noeud .sous{ fill:var(--encre-3); font-family:"IBM Plex Mono",monospace; font-size:10.5px; font-weight:400; }
+.arete{ stroke:var(--trait-fort); stroke-width:1.5; fill:none; }
+.arete.vive{ stroke:var(--accent); stroke-width:2; }
+.arete-lib{ fill:var(--encre-3); font-family:"IBM Plex Mono",monospace; font-size:10px; }
+
+/* --- Quadrants de suivi ---------------------------------------------------- */
+
+.quadrant{
+  background:var(--panneau); border:1px solid var(--trait); border-radius:4px;
+  padding:16px 18px; display:grid; gap:12px; align-content:start;
+}
+.quadrant h2{ margin:0; font-family:var(--display); font-weight:600; font-size:17px; color:var(--encre); }
+.quadrant p{ margin:0; font-size:13px; line-height:1.5; color:var(--encre-2); }
+.quadrant svg{ display:block; width:100%; height:auto; }
+
+.pastilles{ display:flex; flex-wrap:wrap; gap:6px; }
+.pastille{
+  font-family:var(--data); font-size:10.5px; letter-spacing:.1em; text-transform:uppercase;
+  padding:3px 8px; border-radius:2px; border:1px solid var(--trait); color:var(--encre-2);
+}
+.pastille.ok{ color:var(--vert); border-color:var(--vert); background:var(--vert-voile); }
+.pastille.at{ color:var(--ambre); border-color:var(--ambre); background:var(--ambre-voile); }
+.pastille.no{ color:var(--rouge); border-color:var(--rouge); background:var(--rouge-voile); }
+
+/* --- Croissance du réseau -------------------------------------------------- */
+
+.croissance{ display:grid; grid-template-columns:repeat(3,1fr); gap:22px; }
+.palier{ display:grid; gap:12px; justify-items:center; text-align:center; }
+.palier .plan{
+  width:100%; border:1px solid var(--trait); border-radius:4px;
+  background:var(--panneau); padding:8px;
+}
+.palier .plan svg{ display:block; width:100%; height:auto; }
+.palier h2{ margin:0; font-family:var(--display); font-weight:700; font-size:19px; color:var(--encre); }
+.palier p{ margin:0; font-size:13.5px; line-height:1.5; color:var(--encre-2); max-width:30ch; }
+.palier .rang{ font-family:var(--data); font-size:11px; letter-spacing:.2em; color:var(--accent); }
+
+/* --- Clôture --------------------------------------------------------------- */
+
+#cloture{ grid-template-rows:1fr; }
+#cloture .bloc{ display:grid; justify-items:center; align-content:center; gap:20px; height:100%; text-align:center; }
+#cloture .sceau{ width:112px; height:112px; }
+#cloture .nom{ font-family:var(--display); font-weight:800; font-size:44px; letter-spacing:.24em; text-indent:.24em; color:var(--encre); }
+#cloture .phrase{ margin:0; font-size:20px; line-height:1.55; color:var(--encre-2); max-width:50ch; text-wrap:balance; }
+#cloture .phrase b{ color:var(--accent); font-weight:600; }
+
+/* --- Sommaire -------------------------------------------------------------- */
+
+#sommaire{
+  position:absolute; inset:0; z-index:60; display:none;
+  background:var(--fond); padding:54px 64px; grid-template-rows:auto 1fr; gap:22px;
+}
+#sommaire.ouvert{ display:grid; }
+#sommaire h2{
+  margin:0; font-family:var(--data); font-size:12px; letter-spacing:.26em;
+  text-transform:uppercase; color:var(--accent); font-weight:500;
+}
+#sommaire ol{
+  margin:0; padding:0; list-style:none; display:grid;
+  grid-template-columns:1fr 1fr; grid-template-rows:repeat(7,auto);
+  grid-auto-flow:column; gap:4px 44px; align-content:start;
+}
+#sommaire button{
+  width:100%; text-align:left; background:none; border:1px solid transparent; cursor:pointer;
+  display:grid; grid-template-columns:34px 1fr; gap:12px; align-items:baseline;
+  padding:9px 10px; border-radius:3px; color:var(--encre-2);
+  font-family:var(--texte); font-size:15px;
+}
+#sommaire button .n{ font-family:var(--data); font-size:12px; color:var(--encre-3); }
+#sommaire button:hover{ background:var(--panneau-2); color:var(--encre); }
+#sommaire button[aria-current="true"]{ color:var(--accent); border-color:var(--accent); }
+#sommaire button[aria-current="true"] .n{ color:var(--accent); }
+
+#aide{
+  position:fixed; right:16px; bottom:14px; z-index:70;
+  font-family:var(--data); font-size:11px; letter-spacing:.1em; text-transform:uppercase;
+  color:var(--encre-3); display:flex; gap:16px;
+}
+#aide kbd{ font-family:var(--data); border:1px solid var(--trait); border-radius:2px; padding:1px 5px; color:var(--encre-2); margin-right:5px; }
+
+:focus-visible{ outline:2px solid var(--accent); outline-offset:2px; }
+
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{ animation-duration:1ms !important; animation-delay:0ms !important; transition-duration:1ms !important; }
+}
+</style>
+
+<div id="tapis">
+<div id="scene" class="scene--nu">
+
+  <div id="jauge" aria-hidden="true"><i></i></div>
+
+  <div class="chrome chrome--haut">
+    <span class="marque"><span class="sceau" role="img" aria-label="Logo GEROD"></span><b>GEROD</b></span>
+    <span id="section"></span>
+    <span class="pousse cadran"><span id="numero">01</span><s> / 12</s></span>
+    <button type="button" id="bascule" aria-label="Basculer entre thème clair et thème sombre">Thème</button>
+  </div>
+
+  <div class="chrome chrome--bas">
+    <span id="fil"></span>
+    <span class="pousse">Gestion Routière de Djibouti</span>
+  </div>
+
+  <!-- ==================================================================== 1 -->
+  <section class="dia" id="couverture" data-section="" data-titre="Ouverture">
+    <canvas id="toile" aria-hidden="true"></canvas>
+    <div class="couv-voile" aria-hidden="true"></div>
+    <div class="couv-bloc">
+      <div class="couv-logo sceau" role="img" aria-label="Logo GEROD"></div>
+      <div class="couv-nom">GEROD</div>
+      <div class="couv-sous">Gestion Routière de Djibouti</div>
+      <div class="couv-trait" aria-hidden="true"></div>
+      <p class="couv-accroche">Surveiller le trafic routier en temps réel, et agir sur ce qui s'y passe.</p>
+    </div>
+    <div class="couv-invite">Flèche droite pour commencer</div>
+  </section>
+
+  <!-- ==================================================================== 2 -->
+  <section class="dia" data-section="Le processus" data-titre="Filmer n'est pas connaître">
+    <header class="entete">
+      <div class="sur">Le processus · 1</div>
+      <h1>Filmer n'est pas connaître</h1>
+    </header>
+    <div class="corps">
+      <div class="duo-cam">
+
+        <div class="cam" data-monte style="--r:0">
+          <div class="cam-tete">Une caméra qui filme</div>
+          <div class="cam-corps">
+            <svg viewBox="0 0 320 132" role="img" aria-label="Image vidéo brute : trois véhicules indistincts et une barre de défilement">
+              <rect class="fond" x="0" y="0" width="320" height="96" rx="3"/>
+              <rect class="cadre" x="0.5" y="0.5" width="319" height="95" rx="3"/>
+              <path class="trait" d="M 0 74 H 320" stroke-dasharray="4 5"/>
+              <rect class="noeud" x="42" y="44" width="46" height="24" rx="4" fill="var(--trait)" stroke="none"/>
+              <rect x="132" y="38" width="58" height="30" rx="4" fill="var(--trait)"/>
+              <rect x="228" y="47" width="40" height="21" rx="4" fill="var(--trait)"/>
+              <rect class="fond" x="0" y="104" width="320" height="12" rx="6"/>
+              <rect class="cadre" x="0.5" y="104.5" width="319" height="11" rx="5.5"/>
+              <rect x="96" y="102" width="4" height="16" rx="2" fill="var(--trait-fort)"/>
+              <text class="encre-3" x="0" y="130">00:00</text>
+              <text class="encre-3" x="286" y="130">12:00</text>
+            </svg>
+            <p class="cam-dit">Il faut savoir d'avance où et quand regarder, puis y passer les heures.</p>
+          </div>
+        </div>
+
+        <div class="cam cam--vif" data-monte style="--r:1">
+          <div class="cam-tete">Une caméra qui détecte</div>
+          <div class="cam-corps">
+            <svg viewBox="0 0 320 132" role="img" aria-label="Même image analysée : chaque véhicule encadré, sa plaque lue et horodatée">
+              <rect class="fond" x="0" y="0" width="320" height="96" rx="3"/>
+              <rect class="cadre" x="0.5" y="0.5" width="319" height="95" rx="3"/>
+              <path class="trait" d="M 0 74 H 320" stroke-dasharray="4 5"/>
+              <rect x="42" y="44" width="46" height="24" rx="4" fill="var(--trait)"/>
+              <rect x="132" y="38" width="58" height="30" rx="4" fill="var(--trait)"/>
+              <rect x="228" y="47" width="40" height="21" rx="4" fill="var(--trait)"/>
+              <rect class="vif" x="38" y="40" width="54" height="32" rx="2" stroke-width="2"/>
+              <rect class="vif" x="128" y="34" width="66" height="38" rx="2" stroke-width="2"/>
+              <rect class="vif" x="224" y="43" width="48" height="29" rx="2" stroke-width="2"/>
+              <rect class="vif-plein" x="38" y="24" width="54" height="14" rx="2"/>
+              <rect class="vif-plein" x="128" y="18" width="66" height="14" rx="2"/>
+              <rect class="vif-plein" x="224" y="27" width="48" height="14" rx="2"/>
+              <text x="42" y="34.5" fill="var(--fond)" font-size="9.5">187D67</text>
+              <text x="132" y="28.5" fill="var(--fond)" font-size="9.5">5123B</text>
+              <text x="228" y="37.5" fill="var(--fond)" font-size="9.5">18IT79</text>
+              <text class="encre-2" x="0" y="112">14:07:31 · 187D67 · CAM_07 · ouest → est</text>
+              <text class="encre-2" x="0" y="127">14:07:34 · 5123B · CAM_07 · est → ouest</text>
+            </svg>
+            <p class="cam-dit">Chaque véhicule devient une ligne datée, avec sa preuve.</p>
+          </div>
+        </div>
+
+      </div>
+      <p class="chute" data-monte style="--r:2">GEROD ne produit pas des images. Il produit des <span>faits datés et opposables</span>.</p>
+    </div>
+  </section>
+
+  <!-- ==================================================================== 3 -->
+  <section class="dia" id="dia-chaine" data-section="Le processus" data-titre="Le processus de détection">
+    <header class="entete">
+      <div class="sur">Le processus · 2</div>
+      <h1>De l'image à la plaque</h1>
+    </header>
+    <div class="corps">
+      <div class="chaine" data-monte style="--r:0">
+        <div class="poste" data-poste="0">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><rect class="cadre" x="2" y="6" width="14" height="12" rx="2" stroke-width="1.6"/><path class="vif" d="M16 11 L22 8 V16 L16 13 Z" stroke-width="1.6"/></svg>
+          <span class="no">01</span><h2>Le flux arrive</h2>
+          <p>Chaque caméra du réseau, en continu.</p>
+        </div>
+        <div class="poste" data-poste="1">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><rect class="vif" x="3" y="7" width="18" height="11" rx="2" stroke-width="1.8"/><path class="trait" d="M6 18v2M18 18v2" stroke-width="1.6"/></svg>
+          <span class="no">02</span><h2>Le véhicule est isolé</h2>
+          <p>Voiture, moto, bus ou camion.</p>
+        </div>
+        <div class="poste" data-poste="2">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path class="vif" d="M3 19 C 8 19, 9 8, 14 8 S 20 5, 21 5" stroke-width="1.8" stroke-dasharray="3 3"/><circle class="vif-plein" cx="3" cy="19" r="2"/><circle class="vif-plein" cx="21" cy="5" r="2"/></svg>
+          <span class="no">03</span><h2>Il est suivi</h2>
+          <p>Une identité unique pendant sa traversée.</p>
+        </div>
+        <div class="poste" data-poste="3">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><rect class="vif" x="2" y="8" width="20" height="9" rx="1.5" stroke-width="1.8"/><path class="trait" d="M6 11.5h3M11 11.5h2M15 11.5h3" stroke-width="1.6" stroke-linecap="round"/></svg>
+          <span class="no">04</span><h2>La plaque est saisie</h2>
+          <p>La meilleure image du passage est gardée.</p>
+        </div>
+        <div class="poste" data-poste="4">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path class="vif" d="M4 6h16M4 12h10M4 18h13" stroke-width="1.8" stroke-linecap="round"/></svg>
+          <span class="no">05</span><h2>Elle est lue, plusieurs fois</h2>
+          <p>À chaque image, avec sa confiance.</p>
+        </div>
+        <div class="poste" data-poste="5">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><circle class="vif" cx="12" cy="12" r="9" stroke-width="1.8"/><path class="vif" d="M8 12.5l3 3 5-6" stroke-width="2" stroke-linecap="round"/></svg>
+          <span class="no">06</span><h2>Une seule est retenue</h2>
+          <p>Celle qui se confirme sur la durée.</p>
+        </div>
+      </div>
+
+      <div class="lecture" data-monte style="--r:1">
+        <div class="plaque instable" id="plaqueVive">1BD5G</div>
+        <div class="votes" id="votes">
+          <div class="vote"><span>187D67</span><span class="barre"><i style="width:12%"></i></span><span>—</span></div>
+          <div class="vote"><span>1B7D67</span><span class="barre"><i style="width:8%"></i></span><span>—</span></div>
+          <div class="vote"><span>187067</span><span class="barre"><i style="width:5%"></i></span><span>—</span></div>
+        </div>
+        <div class="verdict" id="verdict">Lecture en cours</div>
+      </div>
+
+      <p class="chapo" data-monte style="--r:2">Une image floue ne fait pas une erreur d'identification : c'est le passage entier qui décide.</p>
+    </div>
+  </section>
+
+  <!-- ==================================================================== 4 -->
+  <section class="dia" data-section="La philosophie" data-titre="La philosophie de GEROD">
+    <header class="entete">
+      <div class="sur">La philosophie</div>
+      <h1>Quatre règles qui ne bougent pas</h1>
+    </header>
+    <div class="corps">
+      <div class="grille g4">
+        <div class="principe" data-monte style="--r:0">
+          <svg viewBox="0 0 48 48" aria-hidden="true"><rect class="ic-2" x="3" y="12" width="20" height="16" rx="2"/><path class="ic-2" d="M10 19l6 3.5-6 3.5z" fill="none"/><path class="ic" d="M26 20h6"/><path class="ic" d="M29 17l3 3-3 3"/><path class="ic" d="M36 13h9M36 20h9M36 27h6"/><path class="ic" d="M31 34l4 4 9-10"/></svg>
+          <h2>Le fait, pas l'image</h2>
+          <p>La vidéo n'est plus la donnée : elle en devient la preuve.</p>
+        </div>
+        <div class="principe" data-monte style="--r:1">
+          <svg viewBox="0 0 48 48" aria-hidden="true"><path class="ic" d="M24 5l16 7v12c0 11-7 17-16 19C15 41 8 35 8 24V12z" stroke-width="2.4"/><path class="ic" d="M17 24l5 5 10-11" stroke-width="2.6"/></svg>
+          <h2>Rien sans preuve</h2>
+          <p>Chaque constat porte son image, son heure et son lieu.</p>
+        </div>
+        <div class="principe" data-monte style="--r:2">
+          <svg viewBox="0 0 48 48" aria-hidden="true"><rect class="ic-2" x="3" y="10" width="17" height="13" rx="2"/><path class="ic-2" d="M8 30h9M8 36h6"/><circle class="ic" cx="33" cy="14" r="7"/><path class="ic" d="M22 40c0-7 5-11 11-11s11 4 11 11"/></svg>
+          <h2>Le dernier mot à l'agent</h2>
+          <p>La machine prépare et documente. Un humain tranche.</p>
+        </div>
+        <div class="principe" data-monte style="--r:3">
+          <svg viewBox="0 0 48 48" aria-hidden="true"><rect class="ic-2" x="4" y="8" width="26" height="10" rx="2"/><rect class="ic-2" x="4" y="22" width="26" height="10" rx="2"/><path class="ic-2" d="M9 13h.01M9 27h.01" stroke-width="3"/><rect class="ic" x="26" y="30" width="18" height="13" rx="2"/><path class="ic" d="M30 30v-4a5 5 0 0 1 10 0v4"/></svg>
+          <h2>Les données restent chez l'autorité</h2>
+          <p>Sur son infrastructure, avec ses durées de conservation.</p>
+        </div>
+      </div>
+      <p class="chute" data-monte style="--r:4">Ce qui en découle : une donnée <span>écrite une fois</span>, et relue par tout le reste.</p>
+    </div>
+  </section>
+
+  <!-- ==================================================================== 5 -->
+  <section class="dia" data-section="La donnée" data-titre="Une donnée produite">
+    <header class="entete">
+      <div class="sur">La donnée</div>
+      <h1>Une seule donnée produite : le passage</h1>
+    </header>
+    <div class="corps">
+      <div data-monte style="--r:0">
+        <svg viewBox="0 0 1140 250" role="img" aria-label="Le passage au centre, et les six informations qu'il porte : identité du véhicule, horodatage, caméra et sens, image, séquence vidéo, confiance de lecture" style="display:block;width:100%;height:auto">
+          <path class="arete vive" d="M 470 116 H 448 V 45 H 430"/>
+          <path class="arete vive" d="M 470 125 H 430"/>
+          <path class="arete vive" d="M 470 134 H 448 V 205 H 430"/>
+          <path class="arete vive" d="M 670 116 H 692 V 45 H 710"/>
+          <path class="arete vive" d="M 670 125 H 710"/>
+          <path class="arete vive" d="M 670 134 H 692 V 205 H 710"/>
+
+          <circle class="vif-plein" cx="430" cy="45" r="4"/><circle class="vif-plein" cx="430" cy="125" r="4"/><circle class="vif-plein" cx="430" cy="205" r="4"/>
+          <circle class="vif-plein" cx="710" cy="45" r="4"/><circle class="vif-plein" cx="710" cy="125" r="4"/><circle class="vif-plein" cx="710" cy="205" r="4"/>
+
+          <g class="noeud pivot">
+            <rect x="470" y="90" width="200" height="70" rx="4"/>
+            <text x="570" y="118" text-anchor="middle" font-size="15" letter-spacing="2">PASSAGE</text>
+            <text class="sous" x="570" y="140" text-anchor="middle" font-size="13">187D67 · 14:07:31</text>
+          </g>
+
+          <text class="lib" x="416" y="50" text-anchor="end" font-size="14">Identité du véhicule</text>
+          <text class="lib" x="416" y="130" text-anchor="end" font-size="14">Horodatage à la milliseconde</text>
+          <text class="lib" x="416" y="210" text-anchor="end" font-size="14">Caméra, site et sens de circulation</text>
+          <text class="lib" x="724" y="50" font-size="14">Image de la plaque et du véhicule</text>
+          <text class="lib" x="724" y="130" font-size="14">Séquence vidéo horodatée</text>
+          <text class="lib" x="724" y="210" font-size="14">Confiance de la lecture</text>
+        </svg>
+      </div>
+
+      <div class="grille g3">
+        <div class="carte" data-monte style="--r:1">
+          <span class="etiquette">Partagée</span>
+          <h2>Une information, tous les services</h2>
+          <p>Le même passage nourrit la sûreté, le recouvrement et la circulation.</p>
+        </div>
+        <div class="carte" data-monte style="--r:2">
+          <span class="etiquette">Opposable</span>
+          <h2>Elle se défend</h2>
+          <p>Image, heure et lieu attachés : le fait ne repose pas sur la parole du système.</p>
+        </div>
+        <div class="carte" data-monte style="--r:3">
+          <span class="etiquette">Immuable</span>
+          <h2>Écrite une fois</h2>
+          <p>Jamais modifiée après coup. Ce qui est relu six mois plus tard est ce qui a été constaté.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==================================================================== 6 -->
+  <section class="dia" data-section="Ce que GEROD en fait · 1" data-titre="Fonctions de base">
+    <header class="entete">
+      <div class="sur">Ce que GEROD en fait · 1</div>
+      <h1>Les fonctions de base</h1>
+      <p class="chapo">Ce qu'un passage donne immédiatement, sans rien de plus.</p>
+    </header>
+    <div class="corps">
+      <div class="grille g4">
+
+        <div class="tuile" data-monte style="--r:0">
+          <div class="figure">
+            <svg viewBox="0 0 220 74" role="img" aria-label="Trois passages horodatés sur une même ligne de temps">
+              <path class="trait" d="M 10 46 H 210" stroke-width="2"/>
+              <circle class="vif-plein" cx="42" cy="46" r="6"/><circle class="vif-plein" cx="110" cy="46" r="6"/><circle class="vif-plein" cx="176" cy="46" r="6"/>
+              <text class="encre-2" x="42" y="30" text-anchor="middle">14:07</text>
+              <text class="encre-2" x="110" y="30" text-anchor="middle">14:11</text>
+              <text class="encre-2" x="176" y="30" text-anchor="middle">14:16</text>
+              <text class="encre-3" x="10" y="68">CAM_07</text><text class="encre-3" x="210" y="68" text-anchor="end">CAM_12</text>
+            </svg>
+          </div>
+          <h2>Détecter les passages</h2>
+          <p>Chaque véhicule qui traverse un point équipé est relevé, daté et situé.</p>
+        </div>
+
+        <div class="tuile" data-monte style="--r:1">
+          <div class="figure">
+            <svg viewBox="0 0 220 74" role="img" aria-label="Charge horaire d'un axe en barres">
+              <path class="trait" d="M 10 62 H 210" stroke-width="1.5"/>
+              <rect class="vif-plein" x="16" y="44" width="18" height="18"/>
+              <rect class="vif-plein" x="42" y="30" width="18" height="32"/>
+              <rect class="vif-plein" x="68" y="14" width="18" height="48"/>
+              <rect class="vif-plein" x="94" y="24" width="18" height="38"/>
+              <rect class="vif-plein" x="120" y="38" width="18" height="24"/>
+              <rect class="vif-plein" x="146" y="20" width="18" height="42"/>
+              <rect class="vif-plein" x="172" y="40" width="18" height="22"/>
+              <text class="encre-3" x="10" y="12">véh./h</text>
+            </svg>
+          </div>
+          <h2>Mesurer la charge d'un axe</h2>
+          <p>Le comptage est permanent et se compare d'une période à l'autre.</p>
+        </div>
+
+        <div class="tuile" data-monte style="--r:2">
+          <div class="figure">
+            <svg viewBox="0 0 220 74" role="img" aria-label="Une plaque lue rapprochée d'une fiche véhicule">
+              <rect class="vif" x="10" y="24" width="72" height="26" rx="3" stroke-width="2"/>
+              <text class="encre" x="46" y="42" text-anchor="middle" font-size="13">187D67</text>
+              <path class="arete vive" d="M 90 37 H 122" stroke-width="2"/>
+              <path class="vif" d="M 114 31 l 8 6 -8 6" stroke-width="2" fill="none"/>
+              <rect class="cadre" x="132" y="14" width="78" height="46" rx="3" stroke-width="1.5"/>
+              <path class="trait" d="M142 28h58M142 37h44M142 46h52" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+          </div>
+          <h2>Reconnaître le véhicule</h2>
+          <p>La plaque est rapprochée du registre : genre, titulaire, pièces.</p>
+        </div>
+
+        <div class="tuile" data-monte style="--r:3">
+          <div class="figure">
+            <svg viewBox="0 0 220 74" role="img" aria-label="Un constat d'infraction avec son image de preuve">
+              <rect class="cadre" x="10" y="10" width="86" height="54" rx="3" stroke-width="1.5"/>
+              <rect x="18" y="18" width="70" height="26" rx="2" fill="var(--trait)"/>
+              <path class="trait" d="M18 52h48M18 58h34" stroke-width="2" stroke-linecap="round"/>
+              <rect x="112" y="18" width="98" height="20" rx="3" fill="var(--rouge-voile)" stroke="var(--rouge)" stroke-width="1.5"/>
+              <text x="122" y="32" fill="var(--rouge)" font-size="11">CONSTAT OUVERT</text>
+              <text class="encre-3" x="112" y="56">preuve jointe</text>
+            </svg>
+          </div>
+          <h2>Constater une infraction</h2>
+          <p>Ce qui se vérifie sans jugement est constaté en continu, image à l'appui.</p>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- ==================================================================== 7 -->
+  <section class="dia" data-section="Ce que GEROD en fait · 2" data-titre="Fonctions avancées">
+    <header class="entete">
+      <div class="sur">Ce que GEROD en fait · 2</div>
+      <h1>Les fonctions avancées</h1>
+      <p class="chapo">Les mêmes passages, relus ensemble — ce qu'aucune caméra ne donne seule.</p>
+    </header>
+    <div class="corps">
+      <div class="grille g5">
+
+        <div class="tuile" data-monte style="--r:0">
+          <div class="figure">
+            <svg viewBox="0 0 190 76" role="img" aria-label="Recherche d'un véhicule dans l'historique">
+              <circle class="vif" cx="42" cy="30" r="17" stroke-width="2.4"/>
+              <path class="vif" d="M55 43 L70 58" stroke-width="3" stroke-linecap="round"/>
+              <text class="encre" x="42" y="34" text-anchor="middle" font-size="10">187D</text>
+              <path class="trait" d="M 92 26 H 180 M 92 44 H 180 M 92 62 H 180" stroke-width="1.5"/>
+              <circle class="vif-plein" cx="112" cy="26" r="4"/><circle class="vif-plein" cx="148" cy="44" r="4"/><circle class="vif-plein" cx="128" cy="62" r="4"/>
+            </svg>
+          </div>
+          <h2>Rechercher un véhicule</h2>
+          <p>Tous ses passages sur le réseau, sur la période voulue.</p>
+        </div>
+
+        <div class="tuile" data-monte style="--r:1">
+          <div class="figure">
+            <svg viewBox="0 0 190 76" role="img" aria-label="Une personne développée en ses véhicules">
+              <circle class="vif" cx="38" cy="24" r="11" stroke-width="2.2"/>
+              <path class="vif" d="M20 54c0-11 8-16 18-16s18 5 18 16" stroke-width="2.2" fill="none"/>
+              <path class="arete vive" d="M60 38 H 84 V 16 H 104 M84 38 H 104 M84 38 V 60 H 104" stroke-width="2"/>
+              <rect class="cadre" x="110" y="8" width="66" height="17" rx="2" stroke-width="1.5"/>
+              <rect class="cadre" x="110" y="30" width="66" height="17" rx="2" stroke-width="1.5"/>
+              <rect class="cadre" x="110" y="52" width="66" height="17" rx="2" stroke-width="1.5"/>
+              <text class="encre-2" x="118" y="21">187D67</text><text class="encre-2" x="118" y="43">5123B</text><text class="encre-2" x="118" y="65">18IT79</text>
+            </svg>
+          </div>
+          <h2>Rechercher une personne</h2>
+          <p>Sans connaître ses plaques : le registre les développe.</p>
+        </div>
+
+        <div class="tuile" data-monte style="--r:2">
+          <div class="figure">
+            <svg viewBox="0 0 190 76" role="img" aria-label="Surveillance d'un véhicule, d'une personne ou d'un lieu, avec alerte">
+              <rect class="cadre" x="12" y="22" width="34" height="20" rx="3" stroke-width="1.8"/>
+              <circle class="cadre" cx="78" cy="26" r="8" stroke-width="1.8"/><path class="cadre" d="M66 42c0-7 5-10 12-10s12 3 12 10" stroke-width="1.8" fill="none"/>
+              <path class="cadre" d="M126 42c-7-9-11-13-11-19a11 11 0 0 1 22 0c0 6-4 10-11 19z" stroke-width="1.8" fill="none"/>
+              <path class="vif" d="M152 40c0-9 5-14 12-14s12 5 12 14v6h-24z" stroke-width="2" fill="none"/>
+              <path class="vif" d="M158 52a6 6 0 0 0 12 0" stroke-width="2" fill="none"/>
+              <text class="encre-3" x="95" y="70" text-anchor="middle">véhicule · personne · lieu</text>
+            </svg>
+          </div>
+          <h2>Surveiller une cible</h2>
+          <p>« Préviens-moi quand ceci passe. » L'alerte arrive au poste.</p>
+        </div>
+
+        <div class="tuile" data-monte style="--r:3">
+          <div class="figure">
+            <svg viewBox="0 0 190 76" role="img" aria-label="Parcours reconstitué avec une liaison invraisemblable signalée">
+              <path class="trait" d="M0 58 H190 M56 0 V76 M130 0 V76" stroke-width="1.2"/>
+              <path class="vif" d="M18 62 C 44 56, 60 44, 92 30" stroke-width="2.6" fill="none" stroke-linecap="round"/>
+              <path d="M96 28 L 168 52" stroke="var(--rouge)" stroke-width="2.2" stroke-dasharray="5 4" fill="none"/>
+              <circle class="vif-plein" cx="18" cy="62" r="4"/><circle class="vif-plein" cx="92" cy="30" r="4"/>
+              <circle cx="164" cy="50" r="5" fill="none" stroke="var(--rouge)" stroke-width="2.2"/>
+              <text x="132" y="70" text-anchor="middle" fill="var(--rouge)" font-size="10">+4 min · 40 km</text>
+            </svg>
+          </div>
+          <h2>Reconstituer un parcours</h2>
+          <p>L'ordre, la durée — et les liaisons impossibles, signalées.</p>
+        </div>
+
+        <div class="tuile" data-monte style="--r:4">
+          <div class="figure">
+            <svg viewBox="0 0 190 84" role="img" aria-label="État du réseau : un axe fluide, un axe chargé, un axe bloqué">
+              <path d="M10 18 H180" stroke="var(--vert)" stroke-width="7" stroke-linecap="round"/>
+              <path d="M10 38 H180" stroke="var(--ambre)" stroke-width="7" stroke-linecap="round"/>
+              <path d="M10 58 H180" stroke="var(--rouge)" stroke-width="7" stroke-linecap="round"/>
+              <text class="encre-3" x="10" y="12">fluide</text>
+              <text class="encre-3" x="10" y="78">bloqué depuis 12 min</text>
+            </svg>
+          </div>
+          <h2>Lire le réseau en direct</h2>
+          <p>Les blocages sont datés pendant qu'ils durent, avec leur emprise.</p>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- ==================================================================== 8 -->
+  <section class="dia" data-section="Les infractions" data-titre="La gestion des infractions">
+    <header class="entete">
+      <div class="sur">Les infractions</div>
+      <h1>De la détection à la suite donnée</h1>
+    </header>
+    <div class="corps">
+      <div class="flux">
+        <div class="pas" data-monte style="--r:0">
+          <span class="rang">01 · Détecter</span>
+          <h2>La règle constate</h2>
+          <ul>
+            <li>Rapprochement d'une liste</li>
+            <li>Pièce échue au registre</li>
+            <li>Immobilisation prolongée</li>
+          </ul>
+        </div>
+        <div class="pas" data-monte style="--r:1">
+          <span class="rang">02 · Attribuer</span>
+          <h2>Le fait trouve son responsable</h2>
+          <ul>
+            <li>Plaque → véhicule</li>
+            <li>Véhicule → titulaire du jour</li>
+            <li>Nature, gravité, article</li>
+          </ul>
+        </div>
+        <div class="pas" data-monte style="--r:2">
+          <span class="rang">03 · Enregistrer</span>
+          <h2>Le dossier s'ouvre</h2>
+          <ul>
+            <li>Numéro et horodatage</li>
+            <li>Image et séquence vidéo</li>
+            <li>Motif de la constatation</li>
+          </ul>
+        </div>
+        <div class="pas" data-monte style="--r:3">
+          <span class="rang">04 · Suivre</span>
+          <h2>Un agent tranche</h2>
+          <ul>
+            <li>File de validation</li>
+            <li>Confirmation ou rejet motivé</li>
+            <li>Geste consigné au journal</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="issues" data-monte style="--r:4">
+        <div class="issue ok"><span class="c">Validée</span><p>Le constat devient définitif et part vers la suite administrative.</p></div>
+        <div class="issue no"><span class="c">Écartée</span><p>Conservée au journal, avec l'agent et le motif du rejet.</p></div>
+        <div class="issue at"><span class="c">En attente</span><p>Les natures qui exigent d'interpréter la scène restent à l'agent.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==================================================================== 9 -->
+  <section class="dia" data-section="La connaissance routière" data-titre="Connaissance routière globale">
+    <header class="entete">
+      <div class="sur">La connaissance routière</div>
+      <h1>Tout se rejoint sur le véhicule</h1>
+    </header>
+    <div class="corps">
+      <div class="graphe" data-monte style="--r:0">
+        <svg viewBox="0 0 1140 336" role="img" aria-label="Le véhicule au centre, relié à son titulaire d'un côté et, de l'autre, à ses passages, ses pièces, ses infractions et ses titulaires successifs">
+          <path class="arete vive" d="M 260 166 H 430"/>
+          <path class="arete" d="M 680 166 H 770"/>
+          <path class="arete" d="M 770 38 V 298"/>
+          <path class="arete" d="M 770 38 H 860"/>
+          <path class="arete" d="M 770 116 H 860"/>
+          <path class="arete" d="M 770 220 H 860"/>
+          <path class="arete" d="M 770 298 H 860"/>
+
+          <text class="arete-lib" x="345" y="157" text-anchor="middle" font-size="11">titulaire</text>
+
+          <g class="noeud">
+            <rect x="20" y="134" width="240" height="64" rx="4"/>
+            <text x="40" y="164">Personne</text>
+            <text class="sous" x="40" y="183">identité · pièces · coordonnées</text>
+          </g>
+          <text class="arete-lib" x="40" y="222" font-size="11">et tous ses autres véhicules</text>
+
+          <g class="noeud pivot">
+            <rect x="430" y="134" width="250" height="64" rx="4"/>
+            <text x="450" y="164">Véhicule</text>
+            <text class="sous" x="450" y="183">187D67 · utilitaire léger</text>
+          </g>
+
+          <g class="noeud">
+            <rect x="860" y="8" width="270" height="60" rx="4"/>
+            <text x="880" y="38">Passages</text>
+            <text class="sous" x="880" y="57">où, quand, dans quel sens</text>
+          </g>
+          <g class="noeud">
+            <rect x="860" y="86" width="270" height="60" rx="4"/>
+            <text x="880" y="116">Pièces</text>
+            <text class="sous" x="880" y="135">assurance · vignette · carte grise</text>
+          </g>
+          <g class="noeud">
+            <rect x="860" y="190" width="270" height="60" rx="4"/>
+            <text x="880" y="220">Infractions</text>
+            <text class="sous" x="880" y="239">état et suite donnée</text>
+          </g>
+          <g class="noeud">
+            <rect x="860" y="268" width="270" height="60" rx="4"/>
+            <text x="880" y="298">Propriété</text>
+            <text class="sous" x="880" y="317">titulaires successifs, datés</text>
+          </g>
+        </svg>
+      </div>
+      <p class="chapo" data-monte style="--r:1">Un fait ancien reste rattaché à qui était titulaire <b>ce jour-là</b> — pas au propriétaire d'aujourd'hui.</p>
+    </div>
+  </section>
+
+  <!-- =================================================================== 10 -->
+  <section class="dia" data-section="Suivi et évaluation" data-titre="Suivi et évaluation">
+    <header class="entete">
+      <div class="sur">Suivi et évaluation</div>
+      <h1>Le système rend compte de lui-même</h1>
+    </header>
+    <div class="corps">
+      <div class="grille g4">
+
+        <div class="quadrant" data-monte style="--r:0">
+          <h2>État des caméras</h2>
+          <div class="pastilles">
+            <span class="pastille ok">CAM_07 en ligne</span>
+            <span class="pastille ok">CAM_08 en ligne</span>
+            <span class="pastille at">CAM_11 dégradée</span>
+            <span class="pastille no">CAM_12 hors ligne</span>
+            <span class="pastille">CAM_14 maintenance</span>
+          </div>
+          <p>Chaque tuile noire dit pourquoi elle est noire. Une panne qu'on ne voit pas est une panne qui dure.</p>
+        </div>
+
+        <div class="quadrant" data-monte style="--r:1">
+          <h2>Relecture des flux passés</h2>
+          <svg viewBox="0 0 240 74" role="img" aria-label="Barre de lecture vidéo avec une séquence marquée entre deux points">
+            <rect class="fond" x="0" y="18" width="240" height="16" rx="8"/>
+            <rect class="cadre" x="0.5" y="18.5" width="239" height="15" rx="7.5"/>
+            <rect class="vif-plein" x="84" y="18" width="68" height="16" rx="0"/>
+            <path class="vif" d="M84 12v28M152 12v28" stroke-width="3"/>
+            <text class="encre-3" x="0" y="60">14:00</text>
+            <text class="encre-2" x="118" y="60" text-anchor="middle">séquence extraite</text>
+            <text class="encre-3" x="240" y="60" text-anchor="end">15:00</text>
+          </svg>
+          <p>L'enregistrement est continu et horodaté : n'importe quel moment se rouvre.</p>
+        </div>
+
+        <div class="quadrant" data-monte style="--r:2">
+          <h2>Statistiques et rapports</h2>
+          <svg viewBox="0 0 240 74" role="img" aria-label="Comparaison de la période courante avec la précédente">
+            <path class="trait" d="M0 62 H240" stroke-width="1.5"/>
+            <rect x="16" y="34" width="20" height="28" fill="var(--trait)"/><rect x="40" y="22" width="20" height="40" class="vif-plein"/>
+            <rect x="84" y="42" width="20" height="20" fill="var(--trait)"/><rect x="108" y="30" width="20" height="32" class="vif-plein"/>
+            <rect x="152" y="26" width="20" height="36" fill="var(--trait)"/><rect x="176" y="38" width="20" height="24" class="vif-plein"/>
+            <text class="encre-3" x="0" y="12">période précédente</text>
+            <text class="encre-2" x="240" y="12" text-anchor="end">période courante</text>
+          </svg>
+          <p>La période se lit toujours contre la précédente, et s'exporte.</p>
+        </div>
+
+        <div class="quadrant" data-monte style="--r:3">
+          <h2>Journal d'action</h2>
+          <svg viewBox="0 0 240 74" role="img" aria-label="Trois lignes de journal : consultation, validation, rejet motivé">
+            <circle class="vif-plein" cx="7" cy="12" r="4"/><text class="encre-2" x="20" y="16">14:12 · dossier consulté</text>
+            <circle class="vif-plein" cx="7" cy="36" r="4"/><text class="encre-2" x="20" y="40">14:18 · constat validé</text>
+            <circle cx="7" cy="60" r="4" fill="var(--rouge)"/><text class="encre-2" x="20" y="64">14:21 · constat écarté (motif)</text>
+          </svg>
+          <p>Qui a consulté, qui a validé, qui a écarté et pourquoi. Les deux issues sont conservées.</p>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- =================================================================== 11 -->
+  <section class="dia" data-section="Mise en place" data-titre="Une installation progressive">
+    <header class="entete">
+      <div class="sur">Mise en place</div>
+      <h1>Un carrefour d'abord, la ville ensuite</h1>
+      <p class="chapo">Chaque site ajouté enrichit le même ensemble. Rien n'est à reprendre.</p>
+    </header>
+    <div class="corps">
+      <div class="croissance">
+
+        <div class="palier" data-monte style="--r:0">
+          <div class="plan">
+            <svg viewBox="0 0 220 118" role="img" aria-label="Un carrefour équipé d'un point de lecture">
+              <path class="trait" d="M0 62 H220 M110 0 V118" stroke-width="6"/>
+              <circle class="vif-plein" cx="110" cy="62" r="8"/>
+              <circle class="vif" cx="110" cy="62" r="16" stroke-width="2"/>
+            </svg>
+          </div>
+          <span class="rang">Palier 01</span>
+          <h2>Un carrefour</h2>
+          <p>Passages, reconnaissance du véhicule, premiers constats.</p>
+        </div>
+
+        <div class="palier" data-monte style="--r:1">
+          <div class="plan">
+            <svg viewBox="0 0 220 118" role="img" aria-label="Un axe équipé de trois points de lecture, avec un parcours reconstitué">
+              <path class="trait" d="M0 88 H220 M0 34 H220 M70 0 V118 M150 0 V118" stroke-width="4"/>
+              <path class="vif" d="M14 92 C 60 88, 90 44, 200 30" stroke-width="3" fill="none" stroke-linecap="round"/>
+              <circle class="vif-plein" cx="70" cy="88" r="7"/><circle class="vif-plein" cx="150" cy="34" r="7"/><circle class="vif-plein" cx="70" cy="34" r="7"/>
+            </svg>
+          </div>
+          <span class="rang">Palier 02</span>
+          <h2>Un axe</h2>
+          <p>Parcours reconstitués, congestion mesurée sur la durée.</p>
+        </div>
+
+        <div class="palier" data-monte style="--r:2">
+          <div class="plan">
+            <svg viewBox="0 0 220 118" role="img" aria-label="Un réseau urbain couvert par de nombreux points de lecture">
+              <path class="trait" d="M0 26 H220 M0 62 H220 M0 98 H220 M44 0 V118 M110 0 V118 M176 0 V118" stroke-width="3"/>
+              <path class="trait" d="M0 118 L220 0" stroke-width="3"/>
+              <circle class="vif-plein" cx="44" cy="26" r="6"/><circle class="vif-plein" cx="110" cy="26" r="6"/><circle class="vif-plein" cx="176" cy="62" r="6"/>
+              <circle class="vif-plein" cx="44" cy="98" r="6"/><circle class="vif-plein" cx="110" cy="62" r="6"/><circle class="vif-plein" cx="176" cy="98" r="6"/>
+              <circle class="vif-plein" cx="110" cy="98" r="6"/><circle class="vif-plein" cx="44" cy="62" r="6"/>
+            </svg>
+          </div>
+          <span class="rang">Palier 03</span>
+          <h2>La ville</h2>
+          <p>Charge des axes, points noirs, séries comparables d'une année sur l'autre.</p>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- =================================================================== 12 -->
+  <section class="dia" id="cloture" data-section="" data-titre="Clôture">
+    <div class="bloc">
+      <div class="sceau" role="img" aria-label="Logo GEROD" data-monte style="--r:0"></div>
+      <div class="nom" data-monte style="--r:1">GEROD</div>
+      <p class="phrase" data-monte style="--r:2">Une caméra qui détecte, une donnée qui se partage, <b>un fait qui se défend</b>.</p>
+    </div>
+  </section>
+
+  <!-- =================================================================== -->
+  <div id="sommaire" role="dialog" aria-modal="true" aria-label="Sommaire de la présentation">
+    <h2>Sommaire — touche S pour fermer</h2>
+    <ol id="sommaire-liste"></ol>
+  </div>
+
+</div>
+</div>
+
+<div id="aide">
+  <span><kbd>←</kbd><kbd>→</kbd>naviguer</span>
+  <span><kbd>S</kbd>sommaire</span>
+  <span><kbd>T</kbd>thème</span>
+  <span><kbd>F</kbd>plein écran</span>
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  document.documentElement.lang = "fr";
+
+  var racine   = document.documentElement;
+  var scene    = document.getElementById("scene");
+  var tapis    = document.getElementById("tapis");
+  var dias     = Array.prototype.slice.call(document.querySelectorAll(".dia"));
+  var jauge    = document.querySelector("#jauge > i");
+  var elSect   = document.getElementById("section");
+  var elNum    = document.getElementById("numero");
+  var elFil    = document.getElementById("fil");
+  var sommaire = document.getElementById("sommaire");
+  var liste    = document.getElementById("sommaire-liste");
+  var bascule  = document.getElementById("bascule");
+  var sobre    = !!(window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches);
+
+  var index = 0;
+  var echelle = 1;
+
+  // ---------------------------------------------------------------------
+  // Thème. Sans choix explicite, le poste suit le réglage du système ; la
+  // touche T force l'un ou l'autre — une salle claire ne se présente pas
+  // avec un fond noir.
+  // ---------------------------------------------------------------------
+  function themeActif() {
+    var choisi = racine.getAttribute("data-theme");
+    if (choisi) return choisi;
+    return (window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches) ? "dark" : "light";
+  }
+  function poserTheme(t) {
+    racine.setAttribute("data-theme", t);
+    bascule.textContent = t === "dark" ? "Thème clair" : "Thème sombre";
+    try { localStorage.setItem("gerod-deck-theme", t); } catch (e) { /* stockage refusé */ }
+    relirePalette();
+  }
+  bascule.addEventListener("click", function () {
+    poserTheme(themeActif() === "dark" ? "light" : "dark");
+  });
+  try {
+    var memorise = localStorage.getItem("gerod-deck-theme");
+    if (memorise === "dark" || memorise === "light") racine.setAttribute("data-theme", memorise);
+  } catch (e) { /* stockage refusé */ }
+  bascule.textContent = themeActif() === "dark" ? "Thème clair" : "Thème sombre";
+
+  // ---------------------------------------------------------------------
+  // Mise à l'échelle : la scène a une taille fixe, c'est le viewport qui
+  // s'adapte. La typographie est donc identique sur tout projecteur.
+  // ---------------------------------------------------------------------
+  function ajuster() {
+    var marge = window.innerWidth < 700 ? 0 : 28;
+    echelle = Math.max(0.2, Math.min(
+      (window.innerWidth - marge) / 1280,
+      (window.innerHeight - marge) / 720
+    ));
+    scene.style.transform = "scale(" + echelle + ")";
+    dimensionnerToile();
+  }
+  window.addEventListener("resize", ajuster);
+
+  // ---------------------------------------------------------------------
+  // Navigation
+  // ---------------------------------------------------------------------
+  function afficher(n) {
+    n = Math.max(0, Math.min(dias.length - 1, n));
+    if (dias[index]) dias[index].classList.remove("est-active");
+    index = n;
+    var dia = dias[index];
+    dia.classList.add("est-active");
+
+    scene.classList.toggle("scene--nu", index === 0 || index === dias.length - 1);
+
+    elSect.textContent = dia.getAttribute("data-section") || "";
+    elNum.textContent = String(index + 1).padStart(2, "0");
+    elFil.textContent = dia.getAttribute("data-titre") || "";
+    jauge.style.width = (index / (dias.length - 1)) * 100 + "%";
+
+    Array.prototype.forEach.call(liste.querySelectorAll("button"), function (b, i) {
+      b.setAttribute("aria-current", i === index ? "true" : "false");
+    });
+
+    if (index === 0) demarrerToile(); else arreterToile();
+    if (dia.id === "dia-chaine") demarrerChaine(); else arreterChaine();
+
+    var cible = "#" + (index + 1);
+    if (location.hash !== cible) history.replaceState(null, "", cible);
+  }
+
+  function rangDeLAdresse() {
+    var n = parseInt((location.hash || "").slice(1), 10);
+    return isNaN(n) ? 0 : Math.max(0, Math.min(dias.length - 1, n - 1));
+  }
+  window.addEventListener("hashchange", function () {
+    var n = rangDeLAdresse();
+    if (n !== index) afficher(n);
+  });
+
+  function suivant() { if (index < dias.length - 1) afficher(index + 1); }
+  function precedent() { if (index > 0) afficher(index - 1); }
+
+  document.addEventListener("keydown", function (e) {
+    if (e.ctrlKey || e.metaKey || e.altKey) return;
+    var k = e.key;
+    if (sommaire.classList.contains("ouvert")) {
+      if (k === "Escape" || k === "s" || k === "S") { ouvrirSommaire(false); e.preventDefault(); }
+      return;
+    }
+    if (k === "ArrowRight" || k === "PageDown" || k === " " || k === "Enter") { suivant(); e.preventDefault(); }
+    else if (k === "ArrowLeft" || k === "PageUp" || k === "Backspace") { precedent(); e.preventDefault(); }
+    else if (k === "Home") { afficher(0); e.preventDefault(); }
+    else if (k === "End") { afficher(dias.length - 1); e.preventDefault(); }
+    else if (k === "s" || k === "S") { ouvrirSommaire(true); e.preventDefault(); }
+    else if (k === "t" || k === "T") { poserTheme(themeActif() === "dark" ? "light" : "dark"); e.preventDefault(); }
+    else if (k === "f" || k === "F") {
+      if (document.fullscreenElement) document.exitFullscreen();
+      else if (document.documentElement.requestFullscreen) document.documentElement.requestFullscreen();
+      e.preventDefault();
+    }
+  });
+
+  tapis.addEventListener("click", function (e) {
+    if (sommaire.classList.contains("ouvert")) return;
+    if (e.target.closest("button, a")) return;
+    suivant();
+  });
+
+  var toucheX = null;
+  tapis.addEventListener("pointerdown", function (e) { if (e.pointerType === "touch") toucheX = e.clientX; });
+  tapis.addEventListener("pointerup", function (e) {
+    if (toucheX === null) return;
+    var d = e.clientX - toucheX;
+    toucheX = null;
+    if (Math.abs(d) > 60) { if (d < 0) suivant(); else precedent(); }
+  });
+
+  // ---------------------------------------------------------------------
+  // Sommaire
+  // ---------------------------------------------------------------------
+  dias.forEach(function (dia, i) {
+    var li = document.createElement("li");
+    var b = document.createElement("button");
+    b.type = "button";
+    b.innerHTML = '<span class="n">' + String(i + 1).padStart(2, "0") + "</span><span></span>";
+    b.lastChild.textContent = dia.getAttribute("data-titre") || "";
+    b.addEventListener("click", function () { ouvrirSommaire(false); afficher(i); });
+    li.appendChild(b);
+    liste.appendChild(li);
+  });
+
+  function ouvrirSommaire(ouvrir) {
+    sommaire.classList.toggle("ouvert", ouvrir);
+    if (ouvrir) {
+      var courant = liste.querySelectorAll("button")[index];
+      if (courant) courant.focus();
+    }
+  }
+
+  // ---------------------------------------------------------------------
+  // Chaîne de détection : le poste actif défile, la lecture se stabilise.
+  // ---------------------------------------------------------------------
+  var postes = Array.prototype.slice.call(document.querySelectorAll(".poste"));
+  var plaqueVive = document.getElementById("plaqueVive");
+  var votes = document.getElementById("votes");
+  var verdict = document.getElementById("verdict");
+  var minuteurChaine = null;
+  var pasChaine = 0;
+
+  var ETATS = [
+    { plaque: "—",      parts: [12, 8, 5],   mot: "Flux reçu" },
+    { plaque: "1BD5G",  parts: [22, 14, 9],  mot: "Première lecture" },
+    { plaque: "1B7D67", parts: [34, 26, 12], mot: "Lectures divergentes" },
+    { plaque: "187D6Z", parts: [48, 30, 16], mot: "Concordance en hausse" },
+    { plaque: "187D67", parts: [66, 33, 18], mot: "Lecture stabilisée" },
+    { plaque: "187D67", parts: [92, 34, 18], mot: "Plaque retenue" }
+  ];
+
+  function rendreChaine(i) {
+    postes.forEach(function (p, k) { p.classList.toggle("chaud", k === i); });
+    var e = ETATS[i];
+    plaqueVive.textContent = e.plaque;
+    var stable = i >= 4;
+    plaqueVive.classList.toggle("instable", !stable);
+    verdict.textContent = e.mot;
+    var lignes = votes.querySelectorAll(".vote");
+    for (var k = 0; k < lignes.length; k++) {
+      lignes[k].querySelector("i").style.width = e.parts[k] + "%";
+      lignes[k].querySelector("span:last-child").textContent = e.parts[k] > 8 ? e.parts[k] + " %" : "—";
+      lignes[k].classList.toggle("gagne", stable && k === 0);
+    }
+  }
+
+  function demarrerChaine() {
+    arreterChaine();
+    pasChaine = 0;
+    rendreChaine(0);
+    if (sobre) { rendreChaine(5); return; }
+    minuteurChaine = setInterval(function () {
+      pasChaine = (pasChaine + 1) % (ETATS.length + 2);
+      rendreChaine(Math.min(pasChaine, ETATS.length - 1));
+    }, 950);
+  }
+  function arreterChaine() {
+    if (minuteurChaine) { clearInterval(minuteurChaine); minuteurChaine = null; }
+  }
+
+  // ---------------------------------------------------------------------
+  // Ouverture : la scène du poste de contrôle, reprise du splashscreen de
+  // l'application. Elle lit ses couleurs dans les jetons du thème actif :
+  // fond sombre et néon la nuit, fond clair et bleu d'encre le jour.
+  // ---------------------------------------------------------------------
+  var toile = document.getElementById("toile");
+  var ctx = toile.getContext("2d", { alpha: false });
+  var raf = 0, depart = 0, precedente = 0;
+  var L = 1280, H = 720;
+
+  var pal = { fond: "5,7,13", neon: "0,180,255", neon2: "111,227,255", encre: "234,246,255", force: 1, sombre: true };
+
+  function relirePalette() {
+    var s = getComputedStyle(racine);
+    function lire(nom, repli) {
+      var v = s.getPropertyValue(nom).trim();
+      return v || repli;
+    }
+    pal.fond  = lire("--sc-fond", "5,7,13");
+    pal.neon  = lire("--sc-neon", "0,180,255");
+    pal.neon2 = lire("--sc-neon-2", "111,227,255");
+    pal.encre = lire("--sc-encre", "234,246,255");
+    pal.force = parseFloat(lire("--sc-force", "1")) || 1;
+    pal.sombre = pal.force >= 0.9;
+  }
+  function neon(a) { return "rgba(" + pal.neon + "," + (a * pal.force).toFixed(3) + ")"; }
+  function neon2(a) { return "rgba(" + pal.neon2 + "," + (a * pal.force).toFixed(3) + ")"; }
+
+  var VOIES = [
+    { p: [[-0.10, 1.10], [0.15, 0.65], [0.55, 0.40], [1.10, -0.10]] },
+    { p: [[1.10, 1.05], [0.75, 0.72], [0.35, 0.35], [-0.10, -0.10]] },
+    { p: [[0.55, 1.20], [0.58, 0.80], [0.45, 0.45], [0.52, -0.20]] },
+    { p: [[-0.20, 0.85], [0.20, 0.75], [0.80, 0.25], [1.20, 0.15]] },
+    { p: [[-0.15, 0.55], [0.20, 0.52], [0.75, 0.48], [1.15, 0.45]] }
+  ];
+  var autos = [], cadres = [];
+
+  function alea(a, b) { return a + Math.random() * (b - a); }
+  function borne(x) { return Math.max(0, Math.min(1, x)); }
+  function cubique(t) { t = borne(t); return 1 - Math.pow(1 - t, 3); }
+  function adoucir(a, b, x) { var t = borne((x - a) / (b - a)); return t * t * (3 - 2 * t); }
+
+  function bezier(p0, p1, p2, p3, t) {
+    var u = 1 - t, uu = u * u, uuu = uu * u, tt = t * t, ttt = tt * t;
+    return {
+      x: uuu * p0.x + 3 * uu * t * p1.x + 3 * u * tt * p2.x + ttt * p3.x,
+      y: uuu * p0.y + 3 * uu * t * p1.y + 3 * u * tt * p2.y + ttt * p3.y
+    };
+  }
+  function enPixels(voie) {
+    return voie.p.map(function (c) { return { x: c[0] * L, y: c[1] * H }; });
+  }
+
+  function naitreAuto() {
+    autos.push({
+      voie: VOIES[(Math.random() * VOIES.length) | 0],
+      t: Math.random() < 0.5 ? -0.05 : 1.05,
+      sens: 0, vitesse: alea(0.09, 0.18), taille: alea(1.6, 2.6), halo: alea(0.25, 0.55),
+      trace: [], traceMax: alea(10, 22) | 0
+    });
+    var c = autos[autos.length - 1];
+    c.sens = c.t < 0 ? 1 : -1;
+  }
+  function naitreCadre() {
+    cadres.push({ x: alea(0.20, 0.78) * L, y: alea(0.22, 0.74) * H, w: alea(40, 80), h: alea(18, 40), vie: alea(180, 420) });
+  }
+
+  function fond(ms, eveil) {
+    ctx.fillStyle = "rgb(" + pal.fond + ")";
+    ctx.fillRect(0, 0, L, H);
+
+    var rg = ctx.createRadialGradient(L * 0.5, H * 0.28, 0, L * 0.5, H * 0.28, Math.max(L, H) * 0.8);
+    rg.addColorStop(0, neon(0.10));
+    rg.addColorStop(0.55, neon(0.04));
+    rg.addColorStop(1, neon(0));
+    ctx.fillStyle = rg;
+    ctx.fillRect(0, 0, L, H);
+
+    ctx.lineWidth = 1;
+    for (var i = 0; i < 18; i++) {
+      var y = H * 0.18 + i * (H * 0.045);
+      ctx.strokeStyle = neon(0.14 * eveil * (1 - i / 18));
+      ctx.beginPath(); ctx.moveTo(L * 0.12, y); ctx.lineTo(L * 0.88, y); ctx.stroke();
+    }
+    for (var j = -4; j < 8; j++) {
+      var x0 = L * (0.05 + j * 0.12);
+      ctx.strokeStyle = neon2(0.09 * eveil);
+      ctx.beginPath(); ctx.moveTo(x0, H * 0.95); ctx.lineTo(x0 + L * 0.35, H * 0.1); ctx.stroke();
+    }
+
+    var yb = H * (0.12 + ((ms * 0.0012) % 1) * 0.75);
+    var g = ctx.createLinearGradient(0, yb - 32, 0, yb + 32);
+    g.addColorStop(0, neon(0));
+    g.addColorStop(0.5, neon(0.22 * eveil));
+    g.addColorStop(1, neon(0));
+    ctx.fillStyle = g;
+    ctx.fillRect(0, yb - 34, L, 68);
+  }
+
+  function voies(flux) {
+    ctx.lineWidth = 1.5;
+    ctx.strokeStyle = neon(0.2 * flux);
+    for (var v = 0; v < VOIES.length; v++) {
+      var p = enPixels(VOIES[v]);
+      ctx.beginPath();
+      for (var i = 0; i <= 26; i++) {
+        var pt = bezier(p[0], p[1], p[2], p[3], i / 26);
+        if (i === 0) ctx.moveTo(pt.x, pt.y); else ctx.lineTo(pt.x, pt.y);
+      }
+      ctx.stroke();
+    }
+  }
+
+  function vehicules(dt, flux) {
+    if (flux > 0.1 && Math.random() < (sobre ? 0.06 : 0.18)) naitreAuto();
+
+    for (var i = autos.length - 1; i >= 0; i--) {
+      var c = autos[i];
+      c.t += c.sens * c.vitesse * dt;
+      if (c.t < -0.2 || c.t > 1.2) { autos.splice(i, 1); continue; }
+
+      var p = enPixels(c.voie);
+      var pt = bezier(p[0], p[1], p[2], p[3], borne(c.t));
+      c.trace.push(pt);
+      if (c.trace.length > c.traceMax) c.trace.shift();
+
+      ctx.save();
+      ctx.lineWidth = c.taille;
+      ctx.lineCap = "round";
+      ctx.strokeStyle = neon((0.10 + c.halo * 0.22) * flux);
+      ctx.beginPath();
+      for (var k = 0; k < c.trace.length; k++) {
+        if (k === 0) ctx.moveTo(c.trace[k].x, c.trace[k].y);
+        else ctx.lineTo(c.trace[k].x, c.trace[k].y);
+      }
+      ctx.stroke();
+
+      // Le halo additif n'a de sens que sur fond sombre : sur fond clair il
+      // délave le point au lieu de l'éclairer.
+      if (pal.sombre) ctx.globalCompositeOperation = "lighter";
+      ctx.fillStyle = neon2((0.12 + c.halo * 0.35) * flux);
+      ctx.beginPath(); ctx.arc(pt.x, pt.y, 6 + c.taille * 1.2, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = neon2((0.40 + c.halo * 0.45) * flux);
+      ctx.beginPath(); ctx.arc(pt.x, pt.y, 2.5 + c.taille * 0.5, 0, Math.PI * 2); ctx.fill();
+      ctx.restore();
+    }
+  }
+
+  function lectures(dt, flux, controle) {
+    if (flux > 0.1 && Math.random() < (sobre ? 0.02 : 0.06)) naitreCadre();
+
+    for (var i = cadres.length - 1; i >= 0; i--) {
+      var b = cadres[i];
+      b.vie -= dt * 1000;
+      if (b.vie <= 0) { cadres.splice(i, 1); continue; }
+
+      var reste = borne(b.vie / 420);
+      var a = 0.22 * flux * (0.4 + 0.6 * reste) + 0.10 * controle;
+
+      ctx.lineWidth = 1;
+      ctx.strokeStyle = neon(a * 0.85);
+      ctx.strokeRect(b.x, b.y, b.w, b.h);
+
+      ctx.lineWidth = 2;
+      ctx.strokeStyle = neon2(a * 1.1);
+      var t = 8;
+      ctx.beginPath();
+      ctx.moveTo(b.x, b.y + t); ctx.lineTo(b.x, b.y); ctx.lineTo(b.x + t, b.y);
+      ctx.moveTo(b.x + b.w - t, b.y); ctx.lineTo(b.x + b.w, b.y); ctx.lineTo(b.x + b.w, b.y + t);
+      ctx.moveTo(b.x, b.y + b.h - t); ctx.lineTo(b.x, b.y + b.h); ctx.lineTo(b.x + t, b.y + b.h);
+      ctx.moveTo(b.x + b.w - t, b.y + b.h); ctx.lineTo(b.x + b.w, b.y + b.h); ctx.lineTo(b.x + b.w, b.y + b.h - t);
+      ctx.stroke();
+    }
+  }
+
+  function dimensionnerToile() {
+    var q = Math.min(2, (window.devicePixelRatio || 1) * echelle);
+    toile.width = Math.round(L * q);
+    toile.height = Math.round(H * q);
+    ctx.setTransform(q, 0, 0, q, 0, 0);
+  }
+
+  function image(maintenant) {
+    if (!depart) depart = maintenant;
+    var ms = maintenant - depart;
+    var dt = Math.min(0.04, (maintenant - (precedente || maintenant)) / 1000);
+    precedente = maintenant;
+
+    var eveil = cubique(borne(ms / 800));
+    var flux = adoucir(800, 2500, ms);
+    var controle = adoucir(2500, 3500, ms);
+
+    fond(ms, eveil);
+    voies(flux);
+    vehicules(dt, flux);
+    lectures(dt, flux, controle);
+
+    raf = requestAnimationFrame(image);
+  }
+
+  function demarrerToile() { if (!raf) { precedente = 0; raf = requestAnimationFrame(image); } }
+  function arreterToile() { if (raf) { cancelAnimationFrame(raf); raf = 0; } }
+
+  for (var s = 0; s < (sobre ? 6 : 14); s++) naitreAuto();
+  for (var c2 = 0; c2 < (sobre ? 2 : 5); c2++) naitreCadre();
+
+  relirePalette();
+  ajuster();
+  afficher(rangDeLAdresse());
+})();
+</script>
