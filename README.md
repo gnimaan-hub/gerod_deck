@@ -2,7 +2,7 @@
 
 Deck de présentation de **GEROD** — Gestion Routière de Djibouti.
 
-Un seul fichier, autonome : [`GEROD_Presentation.html`](GEROD_Presentation.html).
+Un seul fichier, autonome : [`index.html`](index.html).
 Il s'ouvre dans n'importe quel navigateur, sans serveur ni installation.
 
 ## Contenu
@@ -32,7 +32,7 @@ Douze diapositives, du processus de détection à la mise en place :
 | `F` | Plein écran |
 | `Début` `Fin` | Première / dernière diapositive |
 
-L'adresse porte le rang : `GEROD_Presentation.html#7` ouvre directement la septième.
+L'adresse porte le rang : ajouter `#7` à l'URL ouvre directement la septième diapositive.
 
 ## Notes techniques
 
