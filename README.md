@@ -7,7 +7,7 @@ Il s'ouvre dans n'importe quel navigateur, sans serveur ni installation.
 
 ## Contenu
 
-Douze diapositives, du processus de détection à la mise en place :
+Treize diapositives, du processus de détection à la mise en place :
 
 1. Ouverture
 2. Filmer n'est pas connaître
@@ -18,21 +18,26 @@ Douze diapositives, du processus de détection à la mise en place :
 7. Les fonctions avancées
 8. La gestion des infractions
 9. La connaissance routière
-10. Le suivi et l'évaluation
-11. Une installation progressive
-12. Clôture
+10. La protection des données
+11. Le suivi et l'évaluation
+12. Une installation progressive
+13. Clôture
 
 ## Commandes
 
 | Touche | Effet |
 |---|---|
-| `←` `→` `espace` | Naviguer (un clic avance aussi) |
+| `←` `→` `espace` | Avancer d'un pas (un clic avance aussi) |
 | `S` | Sommaire, pour sauter à une diapositive |
 | `T` | Basculer thème clair / thème sombre |
 | `F` | Plein écran |
 | `Début` `Fin` | Première / dernière diapositive |
 
 L'adresse porte le rang : ajouter `#7` à l'URL ouvre directement la septième diapositive.
+
+Sur les deux diapositives de fonctionnalités, un pas ne change pas de
+diapositive : il pose la fonction suivante. On y revient, ou on y saute par le
+sommaire, avec l'ensemble déjà découvert.
 
 ## Notes techniques
 
@@ -42,6 +47,8 @@ L'adresse porte le rang : ajouter `#7` à l'URL ouvre directement la septième d
   système ; le choix fait à l'écran est mémorisé.
 - Animation d'ouverture reprise du splashscreen de l'application, adaptée aux
   deux thèmes.
+- Les fonctions se révèlent une à une, chacune avec l'animation de sa figure.
+  Sous `prefers-reduced-motion`, tout se pose immédiatement.
 - Les polices viennent de Google Fonts : une connexion améliore le rendu, son
   absence ne casse rien (repli système).
 - Lighthouse (desktop) : performance 99, accessibilité 100, bonnes pratiques

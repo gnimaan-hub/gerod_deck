@@ -197,6 +197,74 @@ h1{
 }
 @keyframes monte{ from{ opacity:0; transform:translateY(14px); } to{ opacity:1; transform:none; } }
 
+/* --- Révélation au clic ---------------------------------------------------
+   Les fonctions se posent une à une : l'orateur garde la main sur le rythme
+   et la salle ne lit pas devant lui. Un pas en arrière les redonne toutes.
+   -------------------------------------------------------------------------- */
+
+.est-active [data-etape]{ opacity:0; visibility:hidden; }
+.est-active [data-etape].montree{
+  opacity:1; visibility:visible;
+  animation:monte 520ms cubic-bezier(.2,.9,.2,1) backwards;
+}
+
+/* Animations de figure — jouées à la révélation de la tuile qui les porte.
+   --d décale une pièce par rapport aux autres à l'intérieur d'une même figure. */
+
+.montree .anim-pop,
+.montree .anim-barre,
+.montree .anim-sonne,
+.montree .anim-constat{ transform-box:fill-box; }
+
+.montree .anim-pop{
+  transform-origin:center;
+  animation:figPop 420ms cubic-bezier(.2,1.4,.4,1) backwards;
+  animation-delay:calc(var(--d,0s) + 380ms);
+}
+.montree .anim-barre{
+  transform-origin:bottom;
+  animation:figBarre 520ms cubic-bezier(.2,.9,.2,1) backwards;
+  animation-delay:calc(var(--d,0s) + 380ms);
+}
+.anim-trace{ stroke-dasharray:1; }
+.montree .anim-trace{
+  animation:figTrace 720ms cubic-bezier(.4,0,.2,1) backwards;
+  animation-delay:calc(var(--d,0s) + 300ms);
+}
+.montree .anim-para{
+  animation:figPara 460ms ease backwards;
+  animation-delay:calc(var(--d,0s) + 380ms);
+}
+.montree .anim-sonne{
+  transform-origin:top center;
+  animation:figSonne 900ms ease backwards;
+  animation-delay:calc(var(--d,0s) + 520ms);
+}
+.montree .anim-constat{
+  transform-origin:center;
+  animation:figPop 420ms cubic-bezier(.2,1.4,.4,1) backwards,
+            figPouls 1.4s ease-in-out 2;
+  animation-delay:calc(var(--d,0s) + 380ms), calc(var(--d,0s) + 820ms);
+}
+.montree .anim-alerte{
+  animation:figPara 460ms ease backwards,
+            figPouls 1.4s ease-in-out 2;
+  animation-delay:calc(var(--d,0s) + 380ms), calc(var(--d,0s) + 860ms);
+}
+
+@keyframes figPop{ from{ opacity:0; transform:scale(.3); } to{ opacity:1; transform:none; } }
+@keyframes figBarre{ from{ transform:scaleY(0); } to{ transform:scaleY(1); } }
+@keyframes figTrace{ from{ stroke-dashoffset:1; } to{ stroke-dashoffset:0; } }
+@keyframes figPara{ from{ opacity:0; transform:translateY(6px); } to{ opacity:1; transform:none; } }
+@keyframes figPouls{ 0%,100%{ opacity:1; } 50%{ opacity:.32; } }
+@keyframes figSonne{
+  0%,100%{ transform:rotate(0); }
+  18%{ transform:rotate(-12deg); }
+  38%{ transform:rotate(9deg); }
+  58%{ transform:rotate(-6deg); }
+  78%{ transform:rotate(3deg); }
+}
+
 /* --- Briques communes ---------------------------------------------------- */
 
 .grille{ display:grid; gap:16px; }
@@ -484,7 +552,7 @@ svg .ic-2{ stroke:var(--encre-3); fill:none; stroke-width:2; stroke-linecap:roun
   <div class="chrome chrome--haut">
     <span class="marque"><span class="sceau" role="img" aria-label="Logo GEROD"></span><b>GEROD</b></span>
     <span id="section"></span>
-    <span class="pousse cadran"><span id="numero">01</span><s> / 12</s></span>
+    <span class="pousse cadran"><span id="numero">01</span><s id="total"> / 12</s></span>
     <button type="button" id="bascule" aria-label="Basculer entre thème clair et thème sombre">Thème</button>
   </div>
 
@@ -717,14 +785,14 @@ svg .ic-2{ stroke:var(--encre-3); fill:none; stroke-width:2; stroke-linecap:roun
     <div class="corps">
       <div class="grille g4">
 
-        <div class="tuile" data-monte style="--r:0">
+        <div class="tuile" data-etape>
           <div class="figure">
             <svg viewBox="0 0 220 74" role="img" aria-label="Trois passages horodatés sur une même ligne de temps">
-              <path class="trait" d="M 10 46 H 210" stroke-width="2"/>
-              <circle class="vif-plein" cx="42" cy="46" r="6"/><circle class="vif-plein" cx="110" cy="46" r="6"/><circle class="vif-plein" cx="176" cy="46" r="6"/>
-              <text class="encre-2" x="42" y="30" text-anchor="middle">14:07</text>
-              <text class="encre-2" x="110" y="30" text-anchor="middle">14:11</text>
-              <text class="encre-2" x="176" y="30" text-anchor="middle">14:16</text>
+              <path class="trait anim-trace" pathLength="1" d="M 10 46 H 210" stroke-width="2"/>
+              <circle class="vif-plein anim-pop" style="--d:.30s" cx="42" cy="46" r="6"/><circle class="vif-plein anim-pop" style="--d:.46s" cx="110" cy="46" r="6"/><circle class="vif-plein anim-pop" style="--d:.62s" cx="176" cy="46" r="6"/>
+              <text class="encre-2 anim-para" style="--d:.36s" x="42" y="30" text-anchor="middle">14:07</text>
+              <text class="encre-2 anim-para" style="--d:.52s" x="110" y="30" text-anchor="middle">14:11</text>
+              <text class="encre-2 anim-para" style="--d:.68s" x="176" y="30" text-anchor="middle">14:16</text>
               <text class="encre-3" x="10" y="68">CAM_07</text><text class="encre-3" x="210" y="68" text-anchor="end">CAM_12</text>
             </svg>
           </div>
@@ -732,17 +800,17 @@ svg .ic-2{ stroke:var(--encre-3); fill:none; stroke-width:2; stroke-linecap:roun
           <p>Chaque véhicule qui traverse un point équipé est relevé, daté et situé.</p>
         </div>
 
-        <div class="tuile" data-monte style="--r:1">
+        <div class="tuile" data-etape>
           <div class="figure">
             <svg viewBox="0 0 220 74" role="img" aria-label="Charge horaire d'un axe en barres">
-              <path class="trait" d="M 10 62 H 210" stroke-width="1.5"/>
-              <rect class="vif-plein" x="16" y="44" width="18" height="18"/>
-              <rect class="vif-plein" x="42" y="30" width="18" height="32"/>
-              <rect class="vif-plein" x="68" y="14" width="18" height="48"/>
-              <rect class="vif-plein" x="94" y="24" width="18" height="38"/>
-              <rect class="vif-plein" x="120" y="38" width="18" height="24"/>
-              <rect class="vif-plein" x="146" y="20" width="18" height="42"/>
-              <rect class="vif-plein" x="172" y="40" width="18" height="22"/>
+              <path class="trait anim-trace" pathLength="1" d="M 10 62 H 210" stroke-width="1.5"/>
+              <rect class="vif-plein anim-barre" style="--d:.02s" x="16" y="44" width="18" height="18"/>
+              <rect class="vif-plein anim-barre" style="--d:.09s" x="42" y="30" width="18" height="32"/>
+              <rect class="vif-plein anim-barre" style="--d:.16s" x="68" y="14" width="18" height="48"/>
+              <rect class="vif-plein anim-barre" style="--d:.23s" x="94" y="24" width="18" height="38"/>
+              <rect class="vif-plein anim-barre" style="--d:.30s" x="120" y="38" width="18" height="24"/>
+              <rect class="vif-plein anim-barre" style="--d:.37s" x="146" y="20" width="18" height="42"/>
+              <rect class="vif-plein anim-barre" style="--d:.44s" x="172" y="40" width="18" height="22"/>
               <text class="encre-3" x="10" y="12">véh./h</text>
             </svg>
           </div>
@@ -750,30 +818,32 @@ svg .ic-2{ stroke:var(--encre-3); fill:none; stroke-width:2; stroke-linecap:roun
           <p>Le comptage est permanent et se compare d'une période à l'autre.</p>
         </div>
 
-        <div class="tuile" data-monte style="--r:2">
+        <div class="tuile" data-etape>
           <div class="figure">
             <svg viewBox="0 0 220 74" role="img" aria-label="Une plaque lue rapprochée d'une fiche véhicule">
-              <rect class="vif" x="10" y="24" width="72" height="26" rx="3" stroke-width="2"/>
-              <text class="encre" x="46" y="42" text-anchor="middle" font-size="13">187D67</text>
-              <path class="arete vive" d="M 90 37 H 122" stroke-width="2"/>
-              <path class="vif" d="M 114 31 l 8 6 -8 6" stroke-width="2" fill="none"/>
-              <rect class="cadre" x="132" y="14" width="78" height="46" rx="3" stroke-width="1.5"/>
-              <path class="trait" d="M142 28h58M142 37h44M142 46h52" stroke-width="2" stroke-linecap="round"/>
+              <rect class="vif anim-pop" x="10" y="24" width="72" height="26" rx="3" stroke-width="2"/>
+              <text class="encre anim-para" style="--d:.10s" x="46" y="42" text-anchor="middle" font-size="13">187D67</text>
+              <path class="arete vive anim-trace" style="--d:.20s" pathLength="1" d="M 90 37 H 122" stroke-width="2"/>
+              <path class="vif anim-para" style="--d:.62s" d="M 114 31 l 8 6 -8 6" stroke-width="2" fill="none"/>
+              <rect class="cadre anim-para" style="--d:.56s" x="132" y="14" width="78" height="46" rx="3" stroke-width="1.5"/>
+              <path class="trait anim-trace" style="--d:.62s" pathLength="1" d="M142 28h58M142 37h44M142 46h52" stroke-width="2" stroke-linecap="round"/>
             </svg>
           </div>
           <h2>Reconnaître le véhicule</h2>
           <p>La plaque est rapprochée du registre : genre, titulaire, pièces.</p>
         </div>
 
-        <div class="tuile" data-monte style="--r:3">
+        <div class="tuile" data-etape>
           <div class="figure">
             <svg viewBox="0 0 220 74" role="img" aria-label="Un constat d'infraction avec son image de preuve">
               <rect class="cadre" x="10" y="10" width="86" height="54" rx="3" stroke-width="1.5"/>
-              <rect x="18" y="18" width="70" height="26" rx="2" fill="var(--trait)"/>
-              <path class="trait" d="M18 52h48M18 58h34" stroke-width="2" stroke-linecap="round"/>
-              <rect x="112" y="18" width="98" height="20" rx="3" fill="var(--rouge-voile)" stroke="var(--rouge)" stroke-width="1.5"/>
-              <text x="122" y="32" fill="var(--rouge)" font-size="11">CONSTAT OUVERT</text>
-              <text class="encre-3" x="112" y="56">preuve jointe</text>
+              <rect class="anim-para" x="18" y="18" width="70" height="26" rx="2" fill="var(--trait)"/>
+              <path class="trait anim-trace" style="--d:.12s" pathLength="1" d="M18 52h48M18 58h34" stroke-width="2" stroke-linecap="round"/>
+              <g class="anim-constat" style="--d:.34s">
+                <rect x="112" y="18" width="98" height="20" rx="3" fill="var(--rouge-voile)" stroke="var(--rouge)" stroke-width="1.5"/>
+                <text x="122" y="32" fill="var(--rouge)" font-size="11">CONSTAT OUVERT</text>
+              </g>
+              <text class="encre-3 anim-para" style="--d:.60s" x="112" y="56">preuve jointe</text>
             </svg>
           </div>
           <h2>Constater une infraction</h2>
@@ -794,74 +864,79 @@ svg .ic-2{ stroke:var(--encre-3); fill:none; stroke-width:2; stroke-linecap:roun
     <div class="corps">
       <div class="grille g5">
 
-        <div class="tuile" data-monte style="--r:0">
+        <div class="tuile" data-etape>
           <div class="figure">
             <svg viewBox="0 0 190 76" role="img" aria-label="Recherche d'un véhicule dans l'historique">
-              <circle class="vif" cx="42" cy="30" r="17" stroke-width="2.4"/>
-              <path class="vif" d="M55 43 L70 58" stroke-width="3" stroke-linecap="round"/>
-              <text class="encre" x="42" y="34" text-anchor="middle" font-size="10">187D</text>
-              <path class="trait" d="M 92 26 H 180 M 92 44 H 180 M 92 62 H 180" stroke-width="1.5"/>
-              <circle class="vif-plein" cx="112" cy="26" r="4"/><circle class="vif-plein" cx="148" cy="44" r="4"/><circle class="vif-plein" cx="128" cy="62" r="4"/>
+              <circle class="vif anim-pop" cx="42" cy="30" r="17" stroke-width="2.4"/>
+              <path class="vif anim-trace" style="--d:.24s" pathLength="1" d="M55 43 L70 58" stroke-width="3" stroke-linecap="round"/>
+              <text class="encre anim-para" style="--d:.16s" x="42" y="34" text-anchor="middle" font-size="10">187D</text>
+              <path class="trait anim-trace" style="--d:.34s" pathLength="1" d="M 92 26 H 180 M 92 44 H 180 M 92 62 H 180" stroke-width="1.5"/>
+              <circle class="vif-plein anim-pop" style="--d:.66s" cx="112" cy="26" r="4"/><circle class="vif-plein anim-pop" style="--d:.78s" cx="148" cy="44" r="4"/><circle class="vif-plein anim-pop" style="--d:.90s" cx="128" cy="62" r="4"/>
             </svg>
           </div>
           <h2>Rechercher un véhicule</h2>
           <p>Tous ses passages sur le réseau, sur la période voulue.</p>
         </div>
 
-        <div class="tuile" data-monte style="--r:1">
+        <div class="tuile" data-etape>
           <div class="figure">
             <svg viewBox="0 0 190 76" role="img" aria-label="Une personne développée en ses véhicules">
-              <circle class="vif" cx="38" cy="24" r="11" stroke-width="2.2"/>
-              <path class="vif" d="M20 54c0-11 8-16 18-16s18 5 18 16" stroke-width="2.2" fill="none"/>
-              <path class="arete vive" d="M60 38 H 84 V 16 H 104 M84 38 H 104 M84 38 V 60 H 104" stroke-width="2"/>
-              <rect class="cadre" x="110" y="8" width="66" height="17" rx="2" stroke-width="1.5"/>
-              <rect class="cadre" x="110" y="30" width="66" height="17" rx="2" stroke-width="1.5"/>
-              <rect class="cadre" x="110" y="52" width="66" height="17" rx="2" stroke-width="1.5"/>
-              <text class="encre-2" x="118" y="21">187D67</text><text class="encre-2" x="118" y="43">5123B</text><text class="encre-2" x="118" y="65">18IT79</text>
+              <circle class="vif anim-pop" cx="38" cy="24" r="11" stroke-width="2.2"/>
+              <path class="vif anim-para" style="--d:.10s" d="M20 54c0-11 8-16 18-16s18 5 18 16" stroke-width="2.2" fill="none"/>
+              <path class="arete vive anim-trace" style="--d:.26s" pathLength="1" d="M60 38 H 84 V 16 H 104 M84 38 H 104 M84 38 V 60 H 104" stroke-width="2"/>
+              <g class="anim-para" style="--d:.66s"><rect class="cadre" x="110" y="8" width="66" height="17" rx="2" stroke-width="1.5"/><text class="encre-2" x="118" y="21">187D67</text></g>
+              <g class="anim-para" style="--d:.78s"><rect class="cadre" x="110" y="30" width="66" height="17" rx="2" stroke-width="1.5"/><text class="encre-2" x="118" y="43">5123B</text></g>
+              <g class="anim-para" style="--d:.90s"><rect class="cadre" x="110" y="52" width="66" height="17" rx="2" stroke-width="1.5"/><text class="encre-2" x="118" y="65">18IT79</text></g>
             </svg>
           </div>
           <h2>Rechercher une personne</h2>
           <p>Sans connaître ses plaques : le registre les développe.</p>
         </div>
 
-        <div class="tuile" data-monte style="--r:2">
+        <div class="tuile" data-etape>
           <div class="figure">
             <svg viewBox="0 0 190 76" role="img" aria-label="Surveillance d'un véhicule, d'une personne ou d'un lieu, avec alerte">
-              <rect class="cadre" x="12" y="22" width="34" height="20" rx="3" stroke-width="1.8"/>
-              <circle class="cadre" cx="78" cy="26" r="8" stroke-width="1.8"/><path class="cadre" d="M66 42c0-7 5-10 12-10s12 3 12 10" stroke-width="1.8" fill="none"/>
-              <path class="cadre" d="M126 42c-7-9-11-13-11-19a11 11 0 0 1 22 0c0 6-4 10-11 19z" stroke-width="1.8" fill="none"/>
-              <path class="vif" d="M152 40c0-9 5-14 12-14s12 5 12 14v6h-24z" stroke-width="2" fill="none"/>
-              <path class="vif" d="M158 52a6 6 0 0 0 12 0" stroke-width="2" fill="none"/>
-              <text class="encre-3" x="95" y="70" text-anchor="middle">véhicule · personne · lieu</text>
+              <rect class="cadre anim-para" style="--d:.04s" x="12" y="22" width="34" height="20" rx="3" stroke-width="1.8"/>
+              <g class="anim-para" style="--d:.16s"><circle class="cadre" cx="78" cy="26" r="8" stroke-width="1.8"/><path class="cadre" d="M66 42c0-7 5-10 12-10s12 3 12 10" stroke-width="1.8" fill="none"/></g>
+              <path class="cadre anim-para" style="--d:.28s" d="M126 42c-7-9-11-13-11-19a11 11 0 0 1 22 0c0 6-4 10-11 19z" stroke-width="1.8" fill="none"/>
+              <g class="anim-sonne" style="--d:.12s">
+                <path class="vif" d="M152 40c0-9 5-14 12-14s12 5 12 14v6h-24z" stroke-width="2" fill="none"/>
+                <path class="vif" d="M158 52a6 6 0 0 0 12 0" stroke-width="2" fill="none"/>
+              </g>
+              <text class="encre-3 anim-para" style="--d:.44s" x="95" y="70" text-anchor="middle">véhicule · personne · lieu</text>
             </svg>
           </div>
           <h2>Surveiller une cible</h2>
           <p>« Préviens-moi quand ceci passe. » L'alerte arrive au poste.</p>
         </div>
 
-        <div class="tuile" data-monte style="--r:3">
+        <div class="tuile" data-etape>
           <div class="figure">
             <svg viewBox="0 0 190 76" role="img" aria-label="Parcours reconstitué avec une liaison invraisemblable signalée">
               <path class="trait" d="M0 58 H190 M56 0 V76 M130 0 V76" stroke-width="1.2"/>
-              <path class="vif" d="M18 62 C 44 56, 60 44, 92 30" stroke-width="2.6" fill="none" stroke-linecap="round"/>
-              <path d="M96 28 L 168 52" stroke="var(--rouge)" stroke-width="2.2" stroke-dasharray="5 4" fill="none"/>
-              <circle class="vif-plein" cx="18" cy="62" r="4"/><circle class="vif-plein" cx="92" cy="30" r="4"/>
-              <circle cx="164" cy="50" r="5" fill="none" stroke="var(--rouge)" stroke-width="2.2"/>
-              <text x="132" y="70" text-anchor="middle" fill="var(--rouge)" font-size="10">+4 min · 40 km</text>
+              <path class="vif anim-trace" style="--d:.10s" pathLength="1" d="M18 62 C 44 56, 60 44, 92 30" stroke-width="2.6" fill="none" stroke-linecap="round"/>
+              <circle class="vif-plein anim-pop" cx="18" cy="62" r="4"/><circle class="vif-plein anim-pop" style="--d:.72s" cx="92" cy="30" r="4"/>
+              <g class="anim-alerte" style="--d:.84s">
+                <path d="M96 28 L 168 52" stroke="var(--rouge)" stroke-width="2.2" stroke-dasharray="5 4" fill="none"/>
+                <circle cx="164" cy="50" r="5" fill="none" stroke="var(--rouge)" stroke-width="2.2"/>
+                <text x="132" y="70" text-anchor="middle" fill="var(--rouge)" font-size="10">+4 min · 40 km</text>
+              </g>
             </svg>
           </div>
           <h2>Reconstituer un parcours</h2>
           <p>L'ordre, la durée — et les liaisons impossibles, signalées.</p>
         </div>
 
-        <div class="tuile" data-monte style="--r:4">
+        <div class="tuile" data-etape>
           <div class="figure">
             <svg viewBox="0 0 190 84" role="img" aria-label="État du réseau : un axe fluide, un axe chargé, un axe bloqué">
-              <path d="M10 18 H180" stroke="var(--vert)" stroke-width="7" stroke-linecap="round"/>
-              <path d="M10 38 H180" stroke="var(--ambre)" stroke-width="7" stroke-linecap="round"/>
-              <path d="M10 58 H180" stroke="var(--rouge)" stroke-width="7" stroke-linecap="round"/>
-              <text class="encre-3" x="10" y="12">fluide</text>
-              <text class="encre-3" x="10" y="78">bloqué depuis 12 min</text>
+              <path class="anim-trace" pathLength="1" d="M10 18 H180" stroke="var(--vert)" stroke-width="7" stroke-linecap="round"/>
+              <path class="anim-trace" style="--d:.14s" pathLength="1" d="M10 38 H180" stroke="var(--ambre)" stroke-width="7" stroke-linecap="round"/>
+              <g class="anim-alerte" style="--d:.46s">
+                <path d="M10 58 H180" stroke="var(--rouge)" stroke-width="7" stroke-linecap="round"/>
+              </g>
+              <text class="encre-3 anim-para" x="10" y="12">fluide</text>
+              <text class="encre-3 anim-para" style="--d:.58s" x="10" y="78">bloqué depuis 12 min</text>
             </svg>
           </div>
           <h2>Lire le réseau en direct</h2>
@@ -985,6 +1060,45 @@ svg .ic-2{ stroke:var(--encre-3); fill:none; stroke-width:2; stroke-linecap:roun
   </section>
 
   <!-- =================================================================== 10 -->
+  <section class="dia" data-section="La protection des données" data-titre="La protection des données">
+    <header class="entete">
+      <div class="sur">La protection des données</div>
+      <h1>Ce que le système s'interdit</h1>
+      <p class="chapo">Un dispositif qui voit beaucoup ne se limite pas par la promesse. Il se limite par construction.</p>
+    </header>
+    <div class="corps">
+      <div class="grille g4">
+
+        <div class="principe" data-monte style="--r:0">
+          <svg viewBox="0 0 48 48" aria-hidden="true"><path class="ic-2" d="M40 5h4v38h-4M8 5H4v38h4"/><rect class="ic" x="12" y="9" width="24" height="9" rx="2"/><rect class="ic" x="12" y="20" width="24" height="9" rx="2"/><rect class="ic" x="12" y="31" width="24" height="9" rx="2"/><path class="ic" d="M17 13.5h.01M17 24.5h.01M17 35.5h.01" stroke-width="3"/></svg>
+          <h2>Rien ne sort</h2>
+          <p>Serveurs, enregistrements et registre sur l'infrastructure de l'autorité. Aucun flux vers un tiers.</p>
+        </div>
+
+        <div class="principe" data-monte style="--r:1">
+          <svg viewBox="0 0 48 48" aria-hidden="true"><rect class="ic-2" x="4" y="11" width="40" height="30" rx="3"/><path class="ic-2" d="M19 11V6h10v5"/><circle class="ic" cx="18" cy="23" r="5"/><path class="ic" d="M10 35c0-5 4-8 8-8s8 3 8 8"/><path class="ic" d="M32 21h7M32 28h7M32 35h4"/></svg>
+          <h2>Nul accès anonyme</h2>
+          <p>Aucun accès collectif, aucun compte partagé entre agents. Un identifiant, une personne, un périmètre.</p>
+        </div>
+
+        <div class="principe" data-monte style="--r:2">
+          <svg viewBox="0 0 48 48" aria-hidden="true"><path class="ic-2" d="M5 10h9M5 20h9M5 30h9M5 40h9"/><path class="ic" d="M20 10h23M20 20h23M20 30h12"/><circle class="ic" cx="34" cy="38" r="8"/><path class="ic" d="M34 34v4l3 2"/></svg>
+          <h2>Consulter est un acte</h2>
+          <p>Ouvrir un dossier se consigne comme valider un constat : qui, quand, sur quoi. Sans exception.</p>
+        </div>
+
+        <div class="principe" data-monte style="--r:3">
+          <svg viewBox="0 0 48 48" aria-hidden="true"><rect class="ic-2" x="3" y="7" width="25" height="19" rx="3"/><path class="ic-2" d="M13 12l8 4.5-8 4.5z" fill="none"/><circle class="ic" cx="34" cy="34" r="9"/><path class="ic" d="M34 29v5l4 3"/></svg>
+          <h2>La vidéo s'efface</h2>
+          <p>Sa durée de conservation est fixée, puis appliquée. Seul ce qu'une procédure retient est gelé.</p>
+        </div>
+
+      </div>
+      <p class="chute" data-monte style="--r:4">Ce qui s'est effacé <span>ne peut pas fuir</span> ; ce qui a été consulté ne peut pas l'avoir été en silence.</p>
+    </div>
+  </section>
+
+  <!-- =================================================================== 11 -->
   <section class="dia" data-section="Suivi et évaluation" data-titre="Suivi et évaluation">
     <header class="entete">
       <div class="sur">Suivi et évaluation</div>
@@ -1046,7 +1160,7 @@ svg .ic-2{ stroke:var(--encre-3); fill:none; stroke-width:2; stroke-linecap:roun
     </div>
   </section>
 
-  <!-- =================================================================== 11 -->
+  <!-- =================================================================== 12 -->
   <section class="dia" data-section="Mise en place" data-titre="Une installation progressive">
     <header class="entete">
       <div class="sur">Mise en place</div>
@@ -1101,7 +1215,7 @@ svg .ic-2{ stroke:var(--encre-3); fill:none; stroke-width:2; stroke-linecap:roun
     </div>
   </section>
 
-  <!-- =================================================================== 12 -->
+  <!-- =================================================================== 13 -->
   <section class="dia" id="cloture" data-section="" data-titre="Clôture">
     <div class="bloc">
       <div class="sceau" role="img" aria-label="Logo GEROD" data-monte style="--r:0"></div>
@@ -1136,6 +1250,7 @@ svg .ic-2{ stroke:var(--encre-3); fill:none; stroke-width:2; stroke-linecap:roun
   var sommaire = document.getElementById("sommaire");
   var liste    = document.getElementById("sommaire-liste");
   var bascule  = document.getElementById("bascule");
+  var etape    = 0;   // rang de l'étape révélée sur la diapositive courante
   var sobre    = !!(window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches);
 
   var index = 0;
@@ -1184,12 +1299,26 @@ svg .ic-2{ stroke:var(--encre-3); fill:none; stroke-width:2; stroke-linecap:roun
   // ---------------------------------------------------------------------
   // Navigation
   // ---------------------------------------------------------------------
-  function afficher(n) {
+  // Les diapositives à étapes portent des [data-etape] : ils se posent un à
+  // un. On n'y entre par étapes qu'en avançant ; on revient sur une
+  // diapositive déjà vue, ou on y saute, avec tout ce qu'elle contient.
+  function etapesDe(dia) {
+    return Array.prototype.slice.call(dia.querySelectorAll("[data-etape]"));
+  }
+
+  function poserEtape(dia, n) {
+    etapesDe(dia).forEach(function (el, i) { el.classList.toggle("montree", i < n); });
+  }
+
+  function afficher(n, sens) {
     n = Math.max(0, Math.min(dias.length - 1, n));
     if (dias[index]) dias[index].classList.remove("est-active");
     index = n;
     var dia = dias[index];
     dia.classList.add("est-active");
+
+    etape = sens === 1 ? 0 : etapesDe(dia).length;
+    poserEtape(dia, etape);
 
     scene.classList.toggle("scene--nu", index === 0 || index === dias.length - 1);
 
@@ -1218,8 +1347,18 @@ svg .ic-2{ stroke:var(--encre-3); fill:none; stroke-width:2; stroke-linecap:roun
     if (n !== index) afficher(n);
   });
 
-  function suivant() { if (index < dias.length - 1) afficher(index + 1); }
-  function precedent() { if (index > 0) afficher(index - 1); }
+  function suivant() {
+    var dia = dias[index];
+    var n = etapesDe(dia).length;
+    if (etape < n) { etape++; poserEtape(dia, etape); return; }
+    if (index < dias.length - 1) afficher(index + 1, 1);
+  }
+
+  function precedent() {
+    var dia = dias[index];
+    if (etape > 0) { etape--; poserEtape(dia, etape); return; }
+    if (index > 0) afficher(index - 1, -1);
+  }
 
   document.addEventListener("keydown", function (e) {
     if (e.ctrlKey || e.metaKey || e.altKey) return;
@@ -1259,6 +1398,9 @@ svg .ic-2{ stroke:var(--encre-3); fill:none; stroke-width:2; stroke-linecap:roun
   // ---------------------------------------------------------------------
   // Sommaire
   // ---------------------------------------------------------------------
+  var elTotal = document.getElementById("total");
+  if (elTotal) elTotal.textContent = " / " + String(dias.length).padStart(2, "0");
+
   dias.forEach(function (dia, i) {
     var li = document.createElement("li");
     var b = document.createElement("button");
