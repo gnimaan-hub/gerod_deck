@@ -279,14 +279,6 @@ svg .ic-2{ stroke:var(--encre-3); fill:none; stroke-width:2; stroke-linecap:roun
   animation:texteEntre 800ms cubic-bezier(.2,.9,.2,1) 3150ms backwards;
 }
 @keyframes texteEntre{ from{ opacity:0; transform:translateY(12px); } to{ opacity:1; transform:none; } }
-.couv-invite{
-  position:absolute; bottom:40px; left:0; right:0; z-index:3; text-align:center;
-  font-family:var(--data); font-size:12px; letter-spacing:.22em; text-transform:uppercase;
-  color:var(--encre-3);
-  animation:texteEntre 800ms ease 3900ms backwards, pouls 3s ease-in-out 4.8s infinite;
-}
-@keyframes pouls{ 0%,100%{ opacity:.6; } 50%{ opacity:1; } }
-
 /* --- Deux caméras -------------------------------------------------------- */
 
 .duo-cam{ display:grid; grid-template-columns:1fr 1fr; gap:22px; }
@@ -477,13 +469,6 @@ svg .ic-2{ stroke:var(--encre-3); fill:none; stroke-width:2; stroke-linecap:roun
 #sommaire button[aria-current="true"]{ color:var(--accent); border-color:var(--accent); }
 #sommaire button[aria-current="true"] .n{ color:var(--accent); }
 
-#aide{
-  position:fixed; right:16px; bottom:14px; z-index:70;
-  font-family:var(--data); font-size:11px; letter-spacing:.1em; text-transform:uppercase;
-  color:var(--encre-3); display:flex; gap:16px;
-}
-#aide kbd{ font-family:var(--data); border:1px solid var(--trait); border-radius:2px; padding:1px 5px; color:var(--encre-2); margin-right:5px; }
-
 :focus-visible{ outline:2px solid var(--accent); outline-offset:2px; }
 
 @media (prefers-reduced-motion:reduce){
@@ -519,7 +504,6 @@ svg .ic-2{ stroke:var(--encre-3); fill:none; stroke-width:2; stroke-linecap:roun
       <div class="couv-trait" aria-hidden="true"></div>
       <p class="couv-accroche">Surveiller le trafic routier en temps réel, et agir sur ce qui s'y passe.</p>
     </div>
-    <div class="couv-invite">Flèche droite pour commencer</div>
   </section>
 
   <!-- ==================================================================== 2 -->
@@ -1128,18 +1112,11 @@ svg .ic-2{ stroke:var(--encre-3); fill:none; stroke-width:2; stroke-linecap:roun
 
   <!-- =================================================================== -->
   <div id="sommaire" role="dialog" aria-modal="true" aria-label="Sommaire de la présentation">
-    <h2>Sommaire — touche S pour fermer</h2>
+    <h2>Sommaire</h2>
     <ol id="sommaire-liste"></ol>
   </div>
 
 </div>
-</div>
-
-<div id="aide">
-  <span><kbd>←</kbd><kbd>→</kbd>naviguer</span>
-  <span><kbd>S</kbd>sommaire</span>
-  <span><kbd>T</kbd>thème</span>
-  <span><kbd>F</kbd>plein écran</span>
 </div>
 
 <script>
